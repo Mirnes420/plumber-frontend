@@ -45,12 +45,12 @@ client.on('message_create', async msg => {
         }
 
         console.log(`Received message from ${msg.from}: ${msg.body}`);
-        
+
         const payload = {
             From: msg.from.replace("@c.us", "").replace("@g.us", ""),
             Body: msg.body
         };
-        
+
         if (msg.hasMedia) {
             payload.MediaUrl0 = "media_attached_but_unsupported_by_simple_forwarder";
         }
@@ -142,7 +142,7 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
         const formData = new FormData();
         formData.append('phone', phone);
         formData.append('description', description);
-        
+
         if (req.file) {
             const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
             formData.append('image', blob, req.file.originalname);
@@ -155,7 +155,7 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
         });
 
         const result = await response.json();
-        
+
         if (!response.ok) {
             console.error("FastAPI Error Response:", JSON.stringify(result, null, 2));
             throw new Error(result.detail ? JSON.stringify(result.detail) : (result.message || 'FastAPI rejected the request'));
@@ -170,6 +170,6 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-    console.log(`wbot API server running on http://localhost:${PORT}`);
-    console.log(`🌍 Customer Web Form is live at: http://localhost:${PORT}`);
+    console.log(`wbot API server running on https://plumber-backend-fnh6.onrender.com`);
+    console.log(`🌍 Customer Web Form is live at: https://plumber-backend-fnh6.onrender.com`);
 });
