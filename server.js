@@ -3,6 +3,7 @@ const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const multer = require('multer');
 const path = require('path');
+const puppeteer = require('puppeteer');
 require('dotenv').config({ path: '../.env' }); // Load shared environment variables
 
 const FASTAPI_URL = process.env.FASTAPI_URL || 'http://localhost:8000';
@@ -13,10 +14,19 @@ app.use(express.static(path.join(__dirname, 'public'))); // Serve our sleek HTML
 
 const upload = multer({ storage: multer.memoryStorage() }); // For handling form image uploads
 
-// Initialize whatsapp-web.js client
+
+
+
 const client = new Client({
-    authStrategy: new LocalAuth()
+    authStrategy: new LocalAuth(),
+    puppeteer: {
+        executablePath: puppeteer.executablePath(),
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    }
 });
+// Initialize whatsapp-web.js client
+
 
 client.on('qr', (qr) => {
     console.log('Scan the QR code below to log in to WhatsApp Web:');
