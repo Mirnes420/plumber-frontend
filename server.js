@@ -15,6 +15,15 @@ app.use(express.static(path.join(__dirname, 'public'))); // Serve our sleek HTML
 const upload = multer({ storage: multer.memoryStorage() }); // For handling form image uploads
 
 
+const browser = await puppeteer.launch({
+    headless: 'new',
+    args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu'
+    ]
+});
 
 
 const client = new Client({
