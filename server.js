@@ -1,10 +1,19 @@
-const express = require('express');
-const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
-const qrcode = require('qrcode-terminal');
-const multer = require('multer');
-const path = require('path');
-const puppeteer = require('puppeteer');
-require('dotenv').config({ path: '../.env' }); // Load shared environment variables
+import express from 'express';
+import pkg from 'whatsapp-web.js';
+const { Client, LocalAuth, MessageMedia } = pkg;
+import qrcode from 'qrcode-terminal';
+import multer from 'multer';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import puppeteer from 'puppeteer';
+import dotenv from 'dotenv';
+
+// Load shared environment variables
+dotenv.config({ path: '../.env' });
+
+// ESM equivalent for __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const FASTAPI_URL = process.env.FASTAPI_URL || 'http://localhost:8000';
 
@@ -14,7 +23,7 @@ app.use(express.static(path.join(__dirname, 'public'))); // Serve our sleek HTML
 
 const upload = multer({ storage: multer.memoryStorage() }); // For handling form image uploads
 
-
+// Launch headless browser instance
 const browser = await puppeteer.launch({
     headless: 'new',
     args: [
@@ -25,7 +34,6 @@ const browser = await puppeteer.launch({
     ]
 });
 
-
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
@@ -34,8 +42,6 @@ const client = new Client({
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     }
 });
-// Initialize whatsapp-web.js client
-
 
 client.on('qr', (qr) => {
     console.log('Scan the QR code below to log in to WhatsApp Web:');
@@ -53,13 +59,11 @@ client.on('auth_failure', msg => {
 // Listen for all messages (including ones sent from the bot's own phone)
 client.on('message_create', async msg => {
     try {
-        // If the message was sent BY the bot/plumber's own phone (fromMe = true),
-        // we only want to forward it if it's a short command, to avoid infinite loops when the bot replies to itself.
         if (msg.fromMe) {
             const bodyUpper = msg.body.trim().toUpperCase();
             const commands = ["URGENT", "NOT URGENT", "ALL TASKS", "EMERGENCY", "NON EMERGENCY", "NO EMERGENCY", "FILTER", "MID", "ALL"];
             if (!commands.includes(bodyUpper)) {
-                return; // Ignore bot's own automated replies and standard outgoing messages
+                return;
             }
         }
 
@@ -97,7 +101,6 @@ app.post('/send', async (req, res) => {
 
         const chatId = number + "@c.us";
 
-        // Helper to swallow known whatsapp-web.js bug where it sends successfully but crashes returning the Message object
         const safeSend = async (id, content, options = {}) => {
             try {
                 await client.sendMessage(id, content, options);
@@ -113,10 +116,7 @@ app.post('/send', async (req, res) => {
         if (buttons && buttons.length > 0) {
             console.log(`Sending keyword-optimized text menu to ${chatId}`);
 
-            // Construct a clean, visually structured text menu
             const menuHeader = text || "⚠️ *Action Required* ⚠️\nPlease select an option by replying with one of the keywords below:";
-
-            // Formats options cleanly, e.g., "👉 *EMERGENCY* - Emergency"
             const menuBody = buttons.map(b => `👉 *${b.toUpperCase().trim()}*`).join('\n');
             const fullMenuText = `${menuHeader}\n\n${menuBody}\n\n_Type your chosen keyword exactly as shown to respond._`;
 
@@ -132,6 +132,7 @@ app.post('/send', async (req, res) => {
                 if (mediaError.message && mediaError.message.includes("getChat")) {
                     console.log("⚠️ Ignored getChat error for image");
                 } else {
+                    key
                     console.error("MessageMedia failed:", mediaError.message);
                     console.log("Falling back to text-only with image URL");
                     const fallbackText = `${caption || text || ""}\n\nImage Attachment: ${imageUrl}`;
@@ -167,7 +168,6 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
             formData.append('image', blob, req.file.originalname);
         }
 
-        // Forward to the new clean FastAPI endpoint using dynamic URL
         const response = await fetch(`${FASTAPI_URL}/api/incident`, {
             method: 'POST',
             body: formData
@@ -189,6 +189,5 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-    console.log(`wbot API server running on https://plumber-backend-fnh6.onrender.com`);
-    console.log(`🌍 Customer Web Form is live at: https://plumber-backend-fnh6.onrender.com`);
+    console.log(`wbot API server running on port ${PORT}`);
 });
