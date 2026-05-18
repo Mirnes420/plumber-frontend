@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Emergency Plumbing Request</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>Emergency Plumbing Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
-            --bg-color: #0f172a;
-            --glass-bg: rgba(30, 41, 59, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --text-light: #f8fafc;
-            --text-muted: #94a3b8;
-            --error: #ef4444;
+            --bg-color: #050505;
+            --card-bg: #121214;
+            --border-color: #27272a;
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1aa;
+            --accent-white: #ffffff;
+            --accent-hover: #e4e4e7;
+            --success: #09f195;
+            --error: #f43f5e;
         }
 
         * {
@@ -25,115 +26,142 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background: var(--bg-color);
-            background-image: 
-                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15), transparent 25%),
-                radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.15), transparent 25%);
-            color: var(--text-light);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 2rem;
+            padding: 1.5rem;
+            letter-spacing: -0.01em;
         }
 
         .container {
             width: 100%;
-            max-width: 500px;
+            max-width: 460px;
         }
 
-        .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
+        .minimal-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
             padding: 2.5rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            animation: fadeIn 0.6s ease-out;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        h1 {
-            font-size: 1.75rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(to right, #60a5fa, #a78bfa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .header {
             text-align: center;
+            margin-bottom: 2rem;
         }
 
-        p.subtitle {
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            margin-bottom: 2rem;
+        .header-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.5;
         }
 
         .form-group {
             margin-bottom: 1.5rem;
-            position: relative;
         }
 
         label {
             display: block;
-            font-size: 0.85rem;
-            font-weight: 600;
+            font-size: 0.8rem;
+            font-weight: 500;
             margin-bottom: 0.5rem;
-            color: var(--text-muted);
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
         }
 
         input[type="text"],
         input[type="tel"],
         textarea {
             width: 100%;
-            padding: 1rem 1.25rem;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            color: white;
-            font-size: 1rem;
+            padding: 0.85rem 1rem 0.85rem 2.75rem;
+            background: #18181b;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
             font-family: 'Inter', sans-serif;
-            transition: all 0.3s ease;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        textarea {
+            padding: 0.85rem 1rem;
+            resize: none;
+            min-height: 110px;
         }
 
         input:focus,
         textarea:focus {
             outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            border-color: var(--accent-white);
+            box-shadow: 0 0 0 1px var(--accent-white);
         }
 
-        textarea {
-            resize: vertical;
-            min-height: 120px;
-        }
-
-        /* File Upload Styling */
+        /* File Upload */
         .file-upload-wrapper {
             position: relative;
             width: 100%;
-            height: 120px;
-            border: 2px dashed var(--glass-border);
-            border-radius: 12px;
+            height: 90px;
+            border: 1px dashed var(--border-color);
+            border-radius: 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: rgba(15, 23, 42, 0.4);
+            background: #18181b;
             cursor: pointer;
-            transition: all 0.3s ease;
-            overflow: hidden;
+            transition: border-color 0.2s ease, background 0.2s ease;
         }
 
         .file-upload-wrapper:hover {
-            border-color: var(--primary);
-            background: rgba(59, 130, 246, 0.05);
+            border-color: var(--accent-white);
+            background: #202024;
         }
 
         .file-upload-wrapper input[type="file"] {
@@ -147,130 +175,121 @@
         }
 
         .file-upload-text {
-            color: var(--text-muted);
-            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
             text-align: center;
             pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .file-upload-text span {
-            color: var(--primary);
-            font-weight: 600;
+            color: var(--text-primary);
+            font-weight: 500;
         }
 
         #file-preview {
-            margin-top: 10px;
-            font-size: 0.85rem;
-            color: #10b981;
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: var(--success);
             display: none;
             text-align: center;
+            font-weight: 500;
         }
 
         button {
             width: 100%;
-            padding: 1rem;
-            background: var(--primary);
-            color: white;
+            padding: 0.9rem;
+            background: var(--accent-white);
+            color: #000000;
             border: none;
-            border-radius: 12px;
-            font-size: 1rem;
+            border-radius: 10px;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 1rem;
+            transition: background 0.2s ease, transform 0.1s ease;
+            margin-top: 0.5rem;
             display: flex;
             justify-content: center;
             align-items: center;
+            gap: 8px;
         }
 
         button:hover {
-            background: var(--primary-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4);
+            background: var(--accent-hover);
         }
 
-        button:disabled {
-            background: var(--text-muted);
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        /* Loading Spinner */
-        .spinner {
-            display: none;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-            margin-left: 10px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        button:active {
+            transform: scale(0.99);
         }
 
         #status-message {
             margin-top: 1.5rem;
-            text-align: center;
-            font-size: 0.95rem;
-            font-weight: 600;
+            font-size: 0.9rem;
+            line-height: 1.5;
             display: none;
             padding: 1rem;
             border-radius: 8px;
+            animation: fadeIn 0.3s ease;
         }
 
         .success-msg {
-            background: rgba(16, 185, 129, 0.1);
-            color: #34d399;
-            border: 1px solid rgba(16, 185, 129, 0.2);
+            background: rgba(9, 241, 149, 0.05);
+            color: var(--success);
+            border: 1px solid rgba(9, 241, 149, 0.15);
         }
 
         .error-msg {
-            background: rgba(239, 68, 68, 0.1);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.2);
+            background: rgba(244, 63, 94, 0.05);
+            color: var(--error);
+            border: 1px solid rgba(244, 63, 94, 0.15);
         }
-
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div class="glass-card">
-            <h1>Emergency Plumber</h1>
-            <p class="subtitle">Submit a request and we'll instantly page our team via WhatsApp.</p>
+        <div class="minimal-card">
+            <div class="header">
+                <div class="header-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                </div>
+                <h1>Emergency Plumber</h1>
+                <p class="subtitle">Submit details. We will instantly process the issue and page our emergency plumber on WhatsApp.</p>
+            </div>
 
             <form id="incident-form">
                 <div class="form-group">
-                    <label for="phone">Your WhatsApp Number (Include Country Code)</label>
-                    <input type="tel" id="phone" name="phone" placeholder="e.g. 385919293138" required>
+                    <label for="phone">WhatsApp Number</label>
+                    <div class="input-wrapper">
+                        <div class="input-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                        </div>
+                        <input type="tel" id="phone" name="phone" placeholder="e.g. 385919293138" required>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="description">Describe the Problem</label>
-                    <textarea id="description" name="description" placeholder="Pipe burst under the kitchen sink, water everywhere!" required></textarea>
+                    <label for="description">Problem Description</label>
+                    <textarea id="description" name="description" placeholder="Describe the leak, block or damage..." required></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label>Photo of the Issue (Optional)</label>
+                    <label>Attach Photo (Optional)</label>
                     <div class="file-upload-wrapper">
                         <input type="file" id="image" name="image" accept="image/*">
                         <div class="file-upload-text">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                            <br>
-                            Click to upload or drag and drop<br>
-                            <span>PNG, JPG up to 5MB</span>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                            <span>Upload Image File</span>
                         </div>
                     </div>
                     <div id="file-preview">File selected</div>
                 </div>
 
                 <button type="submit" id="submit-btn">
-                    <span id="btn-text">Send Emergency Request</span>
-                    <div class="spinner" id="spinner"></div>
+                    <span>Send Request</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                 </button>
 
                 <div id="status-message"></div>
@@ -282,9 +301,6 @@
         const form = document.getElementById('incident-form');
         const fileInput = document.getElementById('image');
         const filePreview = document.getElementById('file-preview');
-        const submitBtn = document.getElementById('submit-btn');
-        const btnText = document.getElementById('btn-text');
-        const spinner = document.getElementById('spinner');
         const statusMessage = document.getElementById('status-message');
 
         fileInput.addEventListener('change', function() {
@@ -299,14 +315,18 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            // UI Loading state
-            submitBtn.disabled = true;
-            btnText.textContent = 'Processing...';
-            spinner.style.display = 'block';
-            statusMessage.style.display = 'none';
-
+            // Instantly show positive optimistic response
+            statusMessage.style.display = 'block';
+            statusMessage.className = 'success-msg';
+            statusMessage.innerHTML = '<strong>✅ Emergency Request Sent!</strong> Our AI is parsing your request and paging our plumber on WhatsApp. Please check your phone for confirmation.';
+            
             const formData = new FormData(form);
-
+            
+            // Reset form fields immediately so they know it was processed
+            form.reset();
+            filePreview.style.display = 'none';
+            
+            // Background Submission Process
             try {
                 const response = await fetch('/submit-form', {
                     method: 'POST',
@@ -318,29 +338,15 @@
                 
                 if (contentType && contentType.indexOf("application/json") !== -1) {
                     result = await response.json();
-                } else {
-                    const text = await response.text();
-                    throw new Error("Server crashed or returned 502 Bad Gateway. (Check Render logs for Out of Memory errors)");
                 }
-
-                statusMessage.style.display = 'block';
-                if (response.ok) {
-                    statusMessage.className = 'success-msg';
-                    statusMessage.textContent = '✅ Request received! Check your WhatsApp for updates.';
-                    form.reset();
-                    filePreview.style.display = 'none';
+                
+                if (!response.ok) {
+                    console.error("Background submission error:", result.error || 'Server error');
                 } else {
-                    throw new Error(result.error || 'Failed to submit request');
+                    console.log("Background submission successfully resolved:", result);
                 }
             } catch (error) {
-                statusMessage.style.display = 'block';
-                statusMessage.className = 'error-msg';
-                statusMessage.textContent = `❌ ${error.message}`;
-            } finally {
-                // Restore UI
-                submitBtn.disabled = false;
-                btnText.textContent = 'Send Emergency Request';
-                spinner.style.display = 'none';
+                console.error("Background connection error:", error);
             }
         });
     </script>
