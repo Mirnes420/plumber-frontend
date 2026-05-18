@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -51,8 +52,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .header {
@@ -247,16 +255,25 @@
         }
     </style>
 </head>
+
 <body>
 
     <div class="container">
         <div class="minimal-card">
             <div class="header">
                 <div class="header-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                        </path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
                 </div>
                 <h1>Emergency Plumber</h1>
-                <p class="subtitle">Submit details. We will instantly process the issue and page our emergency plumber on WhatsApp.</p>
+                <p class="subtitle">Submit details. We will instantly process the issue and page our emergency plumber
+                    on WhatsApp.</p>
             </div>
 
             <form id="incident-form">
@@ -264,7 +281,12 @@
                     <label for="phone">WhatsApp Number</label>
                     <div class="input-wrapper">
                         <div class="input-icon">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path
+                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+                                </path>
+                            </svg>
                         </div>
                         <input type="tel" id="phone" name="phone" placeholder="e.g. 385919293138" required>
                     </div>
@@ -272,7 +294,8 @@
 
                 <div class="form-group">
                     <label for="description">Problem Description</label>
-                    <textarea id="description" name="description" placeholder="Describe the leak, block or damage..." required></textarea>
+                    <textarea id="description" name="description" placeholder="Describe the leak, block or damage..."
+                        required></textarea>
                 </div>
 
                 <div class="form-group">
@@ -280,7 +303,12 @@
                     <div class="file-upload-wrapper">
                         <input type="file" id="image" name="image" accept="image/*">
                         <div class="file-upload-text">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
                             <span>Upload Image File</span>
                         </div>
                     </div>
@@ -289,7 +317,11 @@
 
                 <button type="submit" id="submit-btn">
                     <span>Send Request</span>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
                 </button>
 
                 <div id="status-message"></div>
@@ -303,7 +335,26 @@
         const filePreview = document.getElementById('file-preview');
         const statusMessage = document.getElementById('status-message');
 
-        fileInput.addEventListener('change', function() {
+        // Extract plumber ID from browser URL query parameter or URL path (e.g., /id=1)
+        function getPlumberId() {
+            // First check query string ?plumber=X or ?id=X
+            const urlParams = new URLSearchParams(window.location.search);
+            let id = urlParams.get('plumber') || urlParams.get('id');
+            if (id) return id;
+            
+            // Second check path name split (e.g., /id=1)
+            const pathParts = window.location.pathname.split('/');
+            const lastPart = pathParts[pathParts.length - 1];
+            if (lastPart.startsWith('id=')) {
+                return lastPart.split('=')[1];
+            }
+            return '';
+        }
+
+        const plumberId = getPlumberId();
+        console.log("Detected Plumber ID:", plumberId || "None");
+
+        fileInput.addEventListener('change', function () {
             if (this.files && this.files[0]) {
                 filePreview.textContent = `Selected: ${this.files[0].name}`;
                 filePreview.style.display = 'block';
@@ -312,21 +363,9 @@
             }
         });
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            // Instantly show positive optimistic response
-            statusMessage.style.display = 'block';
-            statusMessage.className = 'success-msg';
-            statusMessage.innerHTML = '<strong>✅ Emergency Request Sent!</strong> Our AI is parsing your request and paging our plumber on WhatsApp. Please check your phone for confirmation.';
-            
-            const formData = new FormData(form);
-            
-            // Reset form fields immediately so they know it was processed
-            form.reset();
-            filePreview.style.display = 'none';
-            
-            // Background Submission Process
+        // Robust background submit with retry logic (for cold starts)
+        async function submitWithRetry(formData, attempt = 1, maxAttempts = 10, delayMs = 8000) {
+            console.log(`Background submission attempt ${attempt}/${maxAttempts}...`);
             try {
                 const response = await fetch('/submit-form', {
                     method: 'POST',
@@ -335,20 +374,53 @@
 
                 const contentType = response.headers.get("content-type");
                 let result = {};
-                
+
                 if (contentType && contentType.indexOf("application/json") !== -1) {
                     result = await response.json();
                 }
-                
+
                 if (!response.ok) {
-                    console.error("Background submission error:", result.error || 'Server error');
-                } else {
-                    console.log("Background submission successfully resolved:", result);
+                    throw new Error(result.error || `HTTP error ${response.status}`);
                 }
+                
+                console.log("✅ Background submission successfully resolved:", result);
+                return result;
             } catch (error) {
-                console.error("Background connection error:", error);
+                console.error(`⚠️ Attempt ${attempt} failed:`, error.message);
+                if (attempt < maxAttempts) {
+                    console.log(`Retrying background submission in ${delayMs / 1000}s...`);
+                    await new Promise(resolve => setTimeout(resolve, delayMs));
+                    return submitWithRetry(formData, attempt + 1, maxAttempts, delayMs);
+                } else {
+                    console.error("❌ Background submission failed permanently after maximum retries.");
+                    throw new Error("Failed to deliver request. Please verify your connection.");
+                }
             }
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Instantly show positive optimistic response
+            statusMessage.style.display = 'block';
+            statusMessage.className = 'success-msg';
+            statusMessage.innerHTML = '<strong>✅ Emergency Request Sent!</strong> Our AI is parsing your request and paging our plumber on WhatsApp. Expect a call soon.';
+
+            const formData = new FormData(form);
+            if (plumberId) {
+                formData.append('plumber_id', plumberId);
+            }
+
+            // Reset form fields immediately so they know it was processed
+            form.reset();
+            filePreview.style.display = 'none';
+
+            // Background Submission Process (Retries automatically)
+            submitWithRetry(formData).catch(err => {
+                console.error("Permanently failed to submit form in background:", err);
+            });
         });
     </script>
 </body>
+
 </html>

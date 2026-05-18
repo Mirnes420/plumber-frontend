@@ -113,8 +113,16 @@ async function startSock() {
 
 startSock();
 
-// Safe API endpoint to get the current QR code data
+// Route to serve index.html for specific plumber IDs (e.g. /id=1)
+app.get('/id=:plumber_id', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Safe API endpoint to get the current QR code data (protected with password)
 app.get('/qr', (req, res) => {
+    if (req.query.pwd !== 'Djemenadje#1') {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
     if (isConnected && pushName) {
         return res.json({ status: 'connected', name: pushName });
     }
@@ -130,36 +138,94 @@ app.get('/auth', (req, res) => {
         <html>
             <head>
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>WhatsApp Bot Auth</title>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
                 <style>
-                    body { display:flex; justify-content:center; align-items:center; height:100vh; background:#0f172a; margin:0; font-family:sans-serif; color:white; }
-                    .card { text-align:center; padding: 2rem; background:rgba(30,41,59,0.9); border-radius:16px; border:1px solid rgba(255,255,255,0.1); max-width:400px; }
-                    #qrcode { margin: 20px auto; background: white; padding: 10px; border-radius: 8px; display:inline-block; }
-                    #status { color:#94a3b8; font-size:14px; margin-top:10px; }
+                    body { display:flex; justify-content:center; align-items:center; height:100vh; background:#050505; margin:0; font-family:sans-serif; color:white; }
+                    .card { text-align:center; padding: 2.5rem; background:#121214; border-radius:20px; border:1px solid #27272a; max-width:400px; width:90%; box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
+                    #qrcode { margin: 20px auto; background: white; padding: 12px; border-radius: 12px; display:inline-block; }
+                    #status { color:#a1a1aa; font-size:14px; margin-top:10px; line-height: 1.4; }
+                    input[type="password"] { width: 100%; padding: 10px 14px; background: #18181b; border: 1px solid #27272a; border-radius: 8px; color: white; margin-top: 15px; box-sizing: border-box; text-align: center; font-size: 16px; }
+                    input[type="password"]:focus { outline: none; border-color: white; }
+                    button { width: 100%; padding: 10px; background: white; color: black; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 15px; font-size: 14px; }
+                    button:hover { background: #e4e4e7; }
+                    #error-msg { color: #f43f5e; font-size: 13px; margin-top: 10px; display: none; }
+                    .hidden { display: none !important; }
                 </style>
             </head>
             <body>
-                <div class="card">
-                    <h2>Link your WhatsApp</h2>
-                    <p>Scan this QR code with your WhatsApp app.</p>
+                <!-- Password Prompt Card -->
+                <div class="card" id="login-card">
+                    <h2 style="margin: 0 0 10px 0;">Enter Admin Password</h2>
+                    <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 20px 0;">Access is restricted to authorized managers.</p>
+                    <input type="password" id="password-input" placeholder="••••••••" required>
+                    <button onclick="handleLogin()">Login</button>
+                    <div id="error-msg">Incorrect password. Please try again.</div>
+                </div>
+
+                <!-- QR Scanner Card -->
+                <div class="card hidden" id="qr-card">
+                    <h2 style="margin: 0 0 10px 0;">Link your WhatsApp</h2>
+                    <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 20px 0;">Scan this QR code with your WhatsApp app.</p>
                     <div id="qrcode"></div>
                     <p id="status">Loading...</p>
                 </div>
+
                 <script>
                     let currentQRText = '';
                     let pollTimer = null;
                     
-                    async function checkStatus() {
+                    function getStoredPassword() {
+                        return sessionStorage.getItem('auth_pwd') || '';
+                    }
+
+                    async function handleLogin() {
+                        const pwd = document.getElementById('password-input').value;
+                        const errorEl = document.getElementById('error-msg');
+                        
                         try {
-                            const res = await fetch('/qr');
+                            const res = await fetch('/qr?pwd=' + encodeURIComponent(pwd));
+                            if (res.status === 200) {
+                                sessionStorage.setItem('auth_pwd', pwd);
+                                errorEl.style.display = 'none';
+                                showQRCard();
+                            } else {
+                                errorEl.style.display = 'block';
+                            }
+                        } catch (err) {
+                            errorEl.textContent = 'Connection error: ' + err.message;
+                            errorEl.style.display = 'block';
+                        }
+                    }
+
+                    function showQRCard() {
+                        document.getElementById('login-card').classList.add('hidden');
+                        document.getElementById('qr-card').classList.remove('hidden');
+                        checkStatus();
+                        pollTimer = setInterval(checkStatus, 5000);
+                    }
+
+                    async function checkStatus() {
+                        const pwd = getStoredPassword();
+                        if (!pwd) {
+                            showLoginCard();
+                            return;
+                        }
+                        try {
+                            const res = await fetch('/qr?pwd=' + encodeURIComponent(pwd));
+                            if (res.status === 401) {
+                                sessionStorage.removeItem('auth_pwd');
+                                showLoginCard();
+                                return;
+                            }
                             const data = await res.json();
                             const statusEl = document.getElementById('status');
                             const qrEl = document.getElementById('qrcode');
                             
                             if (data.status === 'connected') {
-                                statusEl.style.color = '#34d399';
+                                statusEl.style.color = '#09f195';
                                 statusEl.textContent = 'WhatsApp connected as ' + data.name + '!';
-                                qrEl.innerHTML = '<div style="font-size:64px">&#9989;</div>';
+                                qrEl.innerHTML = '<div style="font-size:64px">✅</div>';
                                 if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
                             } else if (data.status === 'qr') {
                                 if (data.qr !== currentQRText) {
@@ -175,9 +241,18 @@ app.get('/auth', (req, res) => {
                             document.getElementById('status').textContent = 'Error: ' + e.message;
                         }
                     }
-                    
-                    checkStatus();
-                    pollTimer = setInterval(checkStatus, 5000);
+
+                    function showLoginCard() {
+                        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+                        document.getElementById('login-card').classList.remove('hidden');
+                        document.getElementById('qr-card').classList.add('hidden');
+                        document.getElementById('password-input').value = '';
+                    }
+
+                    // Initialize state
+                    if (getStoredPassword()) {
+                        showQRCard();
+                    }
                 </script>
             </body>
         </html>
@@ -220,8 +295,16 @@ app.post('/send', async (req, res) => {
             console.log("✅ Keyword text menu sent successfully");
         } else if (imageUrl) {
             console.log(`Sending image to ${chatId}`);
+            let imageSource;
+            if (imageUrl.startsWith('data:image') || !imageUrl.startsWith('http')) {
+                // Extract raw base64 string
+                const base64Data = imageUrl.replace(/^data:image\/[a-z]+;base64,/, "");
+                imageSource = Buffer.from(base64Data, 'base64');
+            } else {
+                imageSource = { url: imageUrl };
+            }
             await sock.sendMessage(chatId, {
-                image: { url: imageUrl },
+                image: imageSource,
                 caption: caption || text || ""
             });
             console.log("✅ Image sent successfully");
@@ -243,12 +326,15 @@ app.post('/send', async (req, res) => {
 // Endpoint to receive HTML form submissions and forward to FastAPI
 app.post('/submit-form', upload.single('image'), async (req, res) => {
     try {
-        const { phone, description } = req.body;
-        console.log(`🌐 Received web form from ${phone}`);
+        const { phone, description, plumber_id } = req.body;
+        console.log(`🌐 Received web form from ${phone} (Plumber ID: ${plumber_id || 'None'})`);
 
         const formData = new FormData();
         formData.append('phone', phone);
         formData.append('description', description);
+        if (plumber_id) {
+            formData.append('plumber_id', plumber_id);
+        }
 
         if (req.file) {
             const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
