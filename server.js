@@ -35,7 +35,9 @@ const browser = await puppeteer.launch({
 });
 
 const client = new Client({
-    authStrategy: new LocalAuth(),
+    authStrategy: new LocalAuth({
+        dataPath: process.env.DATA_PATH || './.wwebjs_auth'
+    }),
     puppeteer: {
         executablePath: puppeteer.executablePath(),
         headless: true,
@@ -43,17 +45,65 @@ const client = new Client({
     }
 });
 
+let currentQR = "";
+
 client.on('qr', (qr) => {
     console.log('Scan the QR code below to log in to WhatsApp Web:');
     qrcode.generate(qr, { small: true });
+    currentQR = qr; // Save for web frontend
 });
 
 client.on('ready', () => {
+    currentQR = "";
     console.log('✅ Client is ready! WhatsApp Web is connected.');
 });
 
 client.on('auth_failure', msg => {
     console.error('AUTHENTICATION FAILURE', msg);
+});
+
+// Web interface to scan the QR Code from the cloud!
+app.get('/auth', (req, res) => {
+    if (client.info && client.info.pushname) {
+        return res.send('<h2 style="font-family:sans-serif; text-align:center; margin-top:50px; color:green;">✅ WhatsApp is already connected!</h2>');
+    }
+    if (!currentQR) {
+        return res.send('<h2 style="font-family:sans-serif; text-align:center; margin-top:50px;">⌛ Generating QR code... Please refresh this page in a few seconds.</h2>');
+    }
+    
+    res.send(`
+        <html>
+            <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+                <style>
+                    body { display:flex; justify-content:center; align-items:center; height:100vh; background:#0f172a; margin:0; font-family:sans-serif; color:white; }
+                    .card { text-align:center; padding: 2rem; background:rgba(30,41,59,0.9); border-radius:16px; border:1px solid rgba(255,255,255,0.1); }
+                    #qrcode { margin: 20px auto; background: white; padding: 10px; border-radius: 8px; display:inline-block; }
+                </style>
+            </head>
+            <body>
+                <div class="card">
+                    <h2>Link your WhatsApp</h2>
+                    <p>Scan this QR code with your WhatsApp app.</p>
+                    <div id="qrcode"></div>
+                    <p style="color:#94a3b8; font-size:14px;">If it doesn't work, refresh the page to get a new code.</p>
+                </div>
+                <script>
+                    new QRCode(document.getElementById("qrcode"), {
+                        text: "${currentQR}",
+                        width: 256,
+                        height: 256
+                    });
+                    
+                    // Auto-refresh to check if connected
+                    setInterval(() => {
+                        window.location.reload();
+                    }, 15000);
+                </script>
+            </body>
+        </html>
+    `);
 });
 
 // Listen for all messages (including ones sent from the bot's own phone)
@@ -77,7 +127,7 @@ client.on('message_create', async msg => {
         if (msg.hasMedia) {
             payload.MediaUrl0 = "media_attached_but_unsupported_by_simple_forwarder";
         }
-
+        console.log('calling the webhook endpoint from the fastapi')
         await fetch(`${FASTAPI_URL}/webhook`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -167,7 +217,7 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
             const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
             formData.append('image', blob, req.file.originalname);
         }
-
+        console.log('calling the incident endpoint from the fastapi')
         const response = await fetch(`${FASTAPI_URL}/api/incident`, {
             method: 'POST',
             body: formData
