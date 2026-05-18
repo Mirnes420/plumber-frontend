@@ -243,25 +243,48 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
             const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
             formData.append('image', blob, req.file.originalname);
         }
-        console.log('calling the incident endpoint from the fastapi')
-        const response = await fetch(`${FASTAPI_URL}/api/incident`, {
-            method: 'POST',
-            body: formData
-        });
-
-        const contentType = response.headers.get("content-type");
-        let result = {};
         
-        if (contentType && contentType.includes("application/json")) {
-            result = await response.json();
-        } else {
-            const text = await response.text();
-            throw new Error(`FastAPI Server Error: Expected JSON but got HTML. This usually means the Python backend crashed or returned 502 Bad Gateway. (Status: ${response.status})`);
-        }
+        // Retry logic for Render cold starts (free tier sleeps after 15min)
+        let result = null;
+        let lastError = null;
+        const maxRetries = 3;
+        
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                console.log(`Attempt ${attempt}/${maxRetries}: calling FastAPI /api/incident`);
+                const response = await fetch(`${FASTAPI_URL}/api/incident`, {
+                    method: 'POST',
+                    body: formData
+                });
 
-        if (!response.ok) {
-            console.error("FastAPI Error Response:", JSON.stringify(result, null, 2));
-            throw new Error(result.detail ? JSON.stringify(result.detail) : (result.message || 'FastAPI rejected the request'));
+                const contentType = response.headers.get("content-type");
+
+                if (contentType && contentType.includes("application/json")) {
+                    result = await response.json();
+                    if (!response.ok) {
+                        console.error("FastAPI Error Response:", JSON.stringify(result, null, 2));
+                        throw new Error(result.detail ? JSON.stringify(result.detail) : (result.message || 'FastAPI rejected the request'));
+                    }
+                    break; // Success!
+                } else {
+                    const text = await response.text();
+                    console.log(`Attempt ${attempt}: Got non-JSON response (Status ${response.status}). Server may still be waking up...`);
+                    lastError = `FastAPI returned status ${response.status} (not JSON). Server may be cold-starting.`;
+                    if (attempt < maxRetries) {
+                        await new Promise(r => setTimeout(r, 5000)); // Wait 5s before retry
+                    }
+                }
+            } catch (fetchErr) {
+                console.log(`Attempt ${attempt}: Fetch failed: ${fetchErr.message}`);
+                lastError = fetchErr.message;
+                if (attempt < maxRetries) {
+                    await new Promise(r => setTimeout(r, 5000));
+                }
+            }
+        }
+        
+        if (!result) {
+            throw new Error(lastError || 'FastAPI server did not respond after retries.');
         }
 
         res.json({ success: true, result });
