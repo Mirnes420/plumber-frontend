@@ -5,7 +5,6 @@ import qrcode from 'qrcode-terminal';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import puppeteer from 'puppeteer';
 import dotenv from 'dotenv';
 
 // Load shared environment variables
@@ -19,17 +18,16 @@ const FASTAPI_URL = process.env.FASTAPI_URL || 'http://localhost:8000';
 
 const app = express();
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public'))); // Serve our sleek HTML form
+app.use(express.static(path.join(__dirname, 'public')));
 
-const upload = multer({ storage: multer.memoryStorage() }); // For handling form image uploads
+const upload = multer({ storage: multer.memoryStorage() });
 
-// Initialize whatsapp-web.js client with memory-saving Puppeteer args for Render
+// Initialize whatsapp-web.js client — uses its OWN bundled Chromium (no extra puppeteer import)
 const client = new Client({
     authStrategy: new LocalAuth({
         dataPath: process.env.DATA_PATH || './.wwebjs_auth'
     }),
     puppeteer: {
-        executablePath: puppeteer.executablePath(),
         headless: true,
         args: [
             '--no-sandbox', 
@@ -40,6 +38,7 @@ const client = new Client({
             '--no-zygote',
             '--disable-gpu',
             '--disable-software-rasterizer',
+            '--disable-extensions',
             '--mute-audio'
         ]
     }
@@ -81,7 +80,7 @@ app.get('/auth', (req, res) => {
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
                 <style>
                     body { display:flex; justify-content:center; align-items:center; height:100vh; background:#0f172a; margin:0; font-family:sans-serif; color:white; }
-                    .card { text-align:center; padding: 2rem; background:rgba(30,41,59,0.9); border-radius:16px; border:1px solid rgba(255,255,255,0.1); }
+                    .card { text-align:center; padding: 2rem; background:rgba(30,41,59,0.9); border-radius:16px; border:1px solid rgba(255,255,255,0.1); max-width:400px; }
                     #qrcode { margin: 20px auto; background: white; padding: 10px; border-radius: 8px; display:inline-block; }
                     #status { color:#94a3b8; font-size:14px; margin-top:10px; }
                 </style>
@@ -91,36 +90,41 @@ app.get('/auth', (req, res) => {
                     <h2>Link your WhatsApp</h2>
                     <p>Scan this QR code with your WhatsApp app.</p>
                     <div id="qrcode"></div>
-                    <p id="status">⌛ Loading QR code...</p>
+                    <p id="status">Loading...</p>
                 </div>
                 <script>
-                    let qrRendered = false;
+                    let currentQRText = '';
+                    let pollTimer = null;
+                    
                     async function checkStatus() {
                         try {
                             const res = await fetch('/qr');
                             const data = await res.json();
                             const statusEl = document.getElementById('status');
+                            const qrEl = document.getElementById('qrcode');
+                            
                             if (data.status === 'connected') {
                                 statusEl.style.color = '#34d399';
-                                statusEl.textContent = '✅ WhatsApp connected as ' + data.name + '!';
-                                document.getElementById('qrcode').innerHTML = '';
-                            } else if (data.status === 'qr' && !qrRendered) {
-                                new QRCode(document.getElementById('qrcode'), {
-                                    text: data.qr,
-                                    width: 256,
-                                    height: 256
-                                });
-                                statusEl.textContent = 'Scan the code above. Page auto-refreshes every 15s.';
-                                qrRendered = true;
-                            } else if (data.status === 'pending') {
-                                statusEl.textContent = '⌛ Generating QR code... refreshing in a moment.';
+                                statusEl.textContent = 'WhatsApp connected as ' + data.name + '!';
+                                qrEl.innerHTML = '<div style="font-size:64px">&#9989;</div>';
+                                if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+                            } else if (data.status === 'qr') {
+                                if (data.qr !== currentQRText) {
+                                    currentQRText = data.qr;
+                                    qrEl.innerHTML = '';
+                                    new QRCode(qrEl, { text: data.qr, width: 256, height: 256 });
+                                }
+                                statusEl.textContent = 'Scan now! QR updates automatically.';
+                            } else {
+                                statusEl.textContent = 'Generating QR code...';
                             }
                         } catch(e) {
-                            document.getElementById('status').textContent = '❌ Error loading QR: ' + e.message;
+                            document.getElementById('status').textContent = 'Error: ' + e.message;
                         }
                     }
+                    
                     checkStatus();
-                    setInterval(() => { qrRendered = false; document.getElementById('qrcode').innerHTML = ''; checkStatus(); }, 15000);
+                    pollTimer = setInterval(checkStatus, 5000);
                 </script>
             </body>
         </html>
