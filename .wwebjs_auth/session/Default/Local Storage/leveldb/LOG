@@ -1,6 +1,0 @@
-2026/05/18-12:22:34.933 638c Reusing MANIFEST C:\Users\Korisnik\Desktop\plumber-save\wbot\.wwebjs_auth\session\Default\Local Storage\leveldb/MANIFEST-000001
-2026/05/18-12:22:34.977 638c Recovering log #4
-2026/05/18-12:22:34.984 638c Reusing old log C:\Users\Korisnik\Desktop\plumber-save\wbot\.wwebjs_auth\session\Default\Local Storage\leveldb/000004.log 
-2026/05/18-12:24:49.030 638c Level-0 table #8: started
-2026/05/18-12:24:49.051 638c Level-0 table #8: 13618 bytes OK
-2026/05/18-12:24:49.055 638c Delete type=0 #4
