@@ -35,9 +35,12 @@ const client = new Client({
             '--no-sandbox', 
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
             '--disable-gpu',
-            '--single-process',
-            '--no-zygote'
+            '--disable-software-rasterizer',
+            '--mute-audio'
         ]
     }
 });
@@ -45,8 +48,7 @@ const client = new Client({
 let currentQR = "";
 
 client.on('qr', (qr) => {
-    console.log('Scan the QR code below to log in to WhatsApp Web:');
-    qrcode.generate(qr, { small: true });
+    console.log('QR Code generated! Go to /auth to scan it.');
     currentQR = qr; // Save for web frontend
 });
 

@@ -313,7 +313,15 @@
                     body: formData
                 });
 
-                const result = await response.json();
+                const contentType = response.headers.get("content-type");
+                let result = {};
+                
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    result = await response.json();
+                } else {
+                    const text = await response.text();
+                    throw new Error("Server crashed or returned 502 Bad Gateway. (Check Render logs for Out of Memory errors)");
+                }
 
                 statusMessage.style.display = 'block';
                 if (response.ok) {
