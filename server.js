@@ -61,15 +61,19 @@ client.on('auth_failure', msg => {
     console.error('AUTHENTICATION FAILURE', msg);
 });
 
-// Web interface to scan the QR Code from the cloud!
-app.get('/auth', (req, res) => {
+// Safe API endpoint to get the current QR code data
+app.get('/qr', (req, res) => {
     if (client.info && client.info.pushname) {
-        return res.send('<h2 style="font-family:sans-serif; text-align:center; margin-top:50px; color:green;">✅ WhatsApp is already connected!</h2>');
+        return res.json({ status: 'connected', name: client.info.pushname });
     }
     if (!currentQR) {
-        return res.send('<h2 style="font-family:sans-serif; text-align:center; margin-top:50px;">⌛ Generating QR code... Please refresh this page in a few seconds.</h2>');
+        return res.json({ status: 'pending' });
     }
-    
+    res.json({ status: 'qr', qr: currentQR });
+});
+
+// Web interface to scan the QR Code from the cloud!
+app.get('/auth', (req, res) => {
     res.send(`
         <html>
             <head>
@@ -79,6 +83,7 @@ app.get('/auth', (req, res) => {
                     body { display:flex; justify-content:center; align-items:center; height:100vh; background:#0f172a; margin:0; font-family:sans-serif; color:white; }
                     .card { text-align:center; padding: 2rem; background:rgba(30,41,59,0.9); border-radius:16px; border:1px solid rgba(255,255,255,0.1); }
                     #qrcode { margin: 20px auto; background: white; padding: 10px; border-radius: 8px; display:inline-block; }
+                    #status { color:#94a3b8; font-size:14px; margin-top:10px; }
                 </style>
             </head>
             <body>
@@ -86,19 +91,36 @@ app.get('/auth', (req, res) => {
                     <h2>Link your WhatsApp</h2>
                     <p>Scan this QR code with your WhatsApp app.</p>
                     <div id="qrcode"></div>
-                    <p style="color:#94a3b8; font-size:14px;">If it doesn't work, refresh the page to get a new code.</p>
+                    <p id="status">⌛ Loading QR code...</p>
                 </div>
                 <script>
-                    new QRCode(document.getElementById("qrcode"), {
-                        text: "${currentQR}",
-                        width: 256,
-                        height: 256
-                    });
-                    
-                    // Auto-refresh to check if connected
-                    setInterval(() => {
-                        window.location.reload();
-                    }, 15000);
+                    let qrRendered = false;
+                    async function checkStatus() {
+                        try {
+                            const res = await fetch('/qr');
+                            const data = await res.json();
+                            const statusEl = document.getElementById('status');
+                            if (data.status === 'connected') {
+                                statusEl.style.color = '#34d399';
+                                statusEl.textContent = '✅ WhatsApp connected as ' + data.name + '!';
+                                document.getElementById('qrcode').innerHTML = '';
+                            } else if (data.status === 'qr' && !qrRendered) {
+                                new QRCode(document.getElementById('qrcode'), {
+                                    text: data.qr,
+                                    width: 256,
+                                    height: 256
+                                });
+                                statusEl.textContent = 'Scan the code above. Page auto-refreshes every 15s.';
+                                qrRendered = true;
+                            } else if (data.status === 'pending') {
+                                statusEl.textContent = '⌛ Generating QR code... refreshing in a moment.';
+                            }
+                        } catch(e) {
+                            document.getElementById('status').textContent = '❌ Error loading QR: ' + e.message;
+                        }
+                    }
+                    checkStatus();
+                    setInterval(() => { qrRendered = false; document.getElementById('qrcode').innerHTML = ''; checkStatus(); }, 15000);
                 </script>
             </body>
         </html>
@@ -227,7 +249,15 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
             body: formData
         });
 
-        const result = await response.json();
+        const contentType = response.headers.get("content-type");
+        let result = {};
+        
+        if (contentType && contentType.includes("application/json")) {
+            result = await response.json();
+        } else {
+            const text = await response.text();
+            throw new Error(`FastAPI Server Error: Expected JSON but got HTML. This usually means the Python backend crashed or returned 502 Bad Gateway. (Status: ${response.status})`);
+        }
 
         if (!response.ok) {
             console.error("FastAPI Error Response:", JSON.stringify(result, null, 2));
