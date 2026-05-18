@@ -145,10 +145,16 @@ app.post('/send', async (req, res) => {
         const { number, text, imageUrl, caption, buttons } = req.body;
 
         if (!number) {
-            return res.status(400).json({ error: 'Number is required (e.g. 385919293138)' });
+            return res.status(400).json({ error: 'Number is required (e.g. 385919293138 or "me")' });
         }
 
-        const chatId = number + "@c.us";
+        let chatId = number + "@c.us";
+        if (number.toLowerCase() === "me") {
+            if (!client.info || !client.info.wid) {
+                return res.status(500).json({ error: 'Cannot send to "me" because WhatsApp is not logged in yet.' });
+            }
+            chatId = client.info.wid._serialized;
+        }
 
         const safeSend = async (id, content, options = {}) => {
             try {
