@@ -134,6 +134,27 @@ app.get('/qr', (req, res) => {
 
 // Web interface to scan the QR Code from the cloud!
 app.get('/auth', (req, res) => {
+    if (req.query.pwd !== 'Djemenadje#1') {
+        return res.status(401).send(`
+            <html>
+                <head>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Unauthorized</title>
+                    <style>
+                        body { display:flex; justify-content:center; align-items:center; height:100vh; background:#050505; margin:0; font-family:sans-serif; color:white; }
+                        .card { text-align:center; padding: 2.5rem; background:#121214; border-radius:20px; border:1px solid #27272a; max-width:400px; width:90%; box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
+                    </style>
+                </head>
+                <body>
+                    <div class="card">
+                        <h2 style="color:#f43f5e; margin:0 0 10px 0;">Access Denied</h2>
+                        <p style="color:#a1a1aa; font-size:14px; line-height:1.6; margin:0;">This administrative portal is password protected.<br><br>Please provide the password in the URL query string, e.g.:<br><code style="color:white; background:#1e1e20; padding:4px 8px; border-radius:4px;">/auth?pwd=Djemenadje#1</code></p>
+                    </div>
+                </body>
+            </html>
+        `);
+    }
+
     res.send(`
         <html>
             <head>
@@ -145,26 +166,11 @@ app.get('/auth', (req, res) => {
                     .card { text-align:center; padding: 2.5rem; background:#121214; border-radius:20px; border:1px solid #27272a; max-width:400px; width:90%; box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
                     #qrcode { margin: 20px auto; background: white; padding: 12px; border-radius: 12px; display:inline-block; }
                     #status { color:#a1a1aa; font-size:14px; margin-top:10px; line-height: 1.4; }
-                    input[type="password"] { width: 100%; padding: 10px 14px; background: #18181b; border: 1px solid #27272a; border-radius: 8px; color: white; margin-top: 15px; box-sizing: border-box; text-align: center; font-size: 16px; }
-                    input[type="password"]:focus { outline: none; border-color: white; }
-                    button { width: 100%; padding: 10px; background: white; color: black; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 15px; font-size: 14px; }
-                    button:hover { background: #e4e4e7; }
-                    #error-msg { color: #f43f5e; font-size: 13px; margin-top: 10px; display: none; }
-                    .hidden { display: none !important; }
                 </style>
             </head>
             <body>
-                <!-- Password Prompt Card -->
-                <div class="card" id="login-card">
-                    <h2 style="margin: 0 0 10px 0;">Enter Admin Password</h2>
-                    <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 20px 0;">Access is restricted to authorized managers.</p>
-                    <input type="password" id="password-input" placeholder="••••••••" required>
-                    <button onclick="handleLogin()">Login</button>
-                    <div id="error-msg">Incorrect password. Please try again.</div>
-                </div>
-
                 <!-- QR Scanner Card -->
-                <div class="card hidden" id="qr-card">
+                <div class="card" id="qr-card">
                     <h2 style="margin: 0 0 10px 0;">Link your WhatsApp</h2>
                     <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 20px 0;">Scan this QR code with your WhatsApp app.</p>
                     <div id="qrcode"></div>
@@ -175,47 +181,22 @@ app.get('/auth', (req, res) => {
                     let currentQRText = '';
                     let pollTimer = null;
                     
-                    function getStoredPassword() {
-                        return sessionStorage.getItem('auth_pwd') || '';
-                    }
-
-                    async function handleLogin() {
-                        const pwd = document.getElementById('password-input').value;
-                        const errorEl = document.getElementById('error-msg');
-                        
-                        try {
-                            const res = await fetch('/qr?pwd=' + encodeURIComponent(pwd));
-                            if (res.status === 200) {
-                                sessionStorage.setItem('auth_pwd', pwd);
-                                errorEl.style.display = 'none';
-                                showQRCard();
-                            } else {
-                                errorEl.style.display = 'block';
-                            }
-                        } catch (err) {
-                            errorEl.textContent = 'Connection error: ' + err.message;
-                            errorEl.style.display = 'block';
-                        }
-                    }
-
-                    function showQRCard() {
-                        document.getElementById('login-card').classList.add('hidden');
-                        document.getElementById('qr-card').classList.remove('hidden');
-                        checkStatus();
-                        pollTimer = setInterval(checkStatus, 5000);
+                    // Automatically capture the password from URL query string
+                    function getPassword() {
+                        const urlParams = new URLSearchParams(window.location.search);
+                        return urlParams.get('pwd') || '';
                     }
 
                     async function checkStatus() {
-                        const pwd = getStoredPassword();
+                        const pwd = getPassword();
                         if (!pwd) {
-                            showLoginCard();
+                            document.getElementById('status').textContent = 'Error: Missing password parameter in URL.';
                             return;
                         }
                         try {
                             const res = await fetch('/qr?pwd=' + encodeURIComponent(pwd));
                             if (res.status === 401) {
-                                sessionStorage.removeItem('auth_pwd');
-                                showLoginCard();
+                                document.getElementById('status').textContent = 'Unauthorized: Invalid password parameter.';
                                 return;
                             }
                             const data = await res.json();
@@ -242,17 +223,9 @@ app.get('/auth', (req, res) => {
                         }
                     }
 
-                    function showLoginCard() {
-                        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
-                        document.getElementById('login-card').classList.remove('hidden');
-                        document.getElementById('qr-card').classList.add('hidden');
-                        document.getElementById('password-input').value = '';
-                    }
-
                     // Initialize state
-                    if (getStoredPassword()) {
-                        showQRCard();
-                    }
+                    checkStatus();
+                    pollTimer = setInterval(checkStatus, 5000);
                 </script>
             </body>
         </html>
