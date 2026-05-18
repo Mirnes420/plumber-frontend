@@ -23,17 +23,7 @@ app.use(express.static(path.join(__dirname, 'public'))); // Serve our sleek HTML
 
 const upload = multer({ storage: multer.memoryStorage() }); // For handling form image uploads
 
-// Launch headless browser instance
-const browser = await puppeteer.launch({
-    headless: 'new',
-    args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu'
-    ]
-});
-
+// Initialize whatsapp-web.js client with memory-saving Puppeteer args for Render
 const client = new Client({
     authStrategy: new LocalAuth({
         dataPath: process.env.DATA_PATH || './.wwebjs_auth'
@@ -41,7 +31,14 @@ const client = new Client({
     puppeteer: {
         executablePath: puppeteer.executablePath(),
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: [
+            '--no-sandbox', 
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--single-process',
+            '--no-zygote'
+        ]
     }
 });
 
@@ -182,7 +179,6 @@ app.post('/send', async (req, res) => {
                 if (mediaError.message && mediaError.message.includes("getChat")) {
                     console.log("⚠️ Ignored getChat error for image");
                 } else {
-                    key
                     console.error("MessageMedia failed:", mediaError.message);
                     console.log("Falling back to text-only with image URL");
                     const fallbackText = `${caption || text || ""}\n\nImage Attachment: ${imageUrl}`;
