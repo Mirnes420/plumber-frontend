@@ -1,7 +1,6 @@
 import express from 'express';
-import pkg from 'whatsapp-web.js';
-const { Client, LocalAuth, MessageMedia } = pkg;
-import qrcode from 'qrcode-terminal';
+import makeWASocket, { useMultiFileAuthState, DisconnectReason } from '@whiskeysockets/baileys';
+import pino from 'pino';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -22,48 +21,102 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Initialize whatsapp-web.js client — uses its OWN bundled Chromium (no extra puppeteer import)
-const client = new Client({
-    authStrategy: new LocalAuth({
-        dataPath: process.env.DATA_PATH || './.wwebjs_auth'
-    }),
-    puppeteer: {
-        headless: true,
-        args: [
-            '--no-sandbox', 
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--no-first-run',
-            '--no-zygote',
-            '--disable-gpu',
-            '--disable-software-rasterizer',
-            '--disable-extensions',
-            '--mute-audio'
-        ]
-    }
-});
-
 let currentQR = "";
+let sock = null;
+let isConnected = false;
+let pushName = "";
 
-client.on('qr', (qr) => {
-    console.log('QR Code generated! Go to /auth to scan it.');
-    currentQR = qr; // Save for web frontend
-});
+const logger = pino({ level: 'silent' });
 
-client.on('ready', () => {
-    currentQR = "";
-    console.log('✅ Client is ready! WhatsApp Web is connected.');
-});
+async function startSock() {
+    const { state, saveCreds } = await useMultiFileAuthState(process.env.DATA_PATH || './.baileys_auth');
+    
+    sock = makeWASocket({
+        auth: state,
+        printQRInTerminal: false,
+        logger: logger
+    });
+    
+    sock.ev.on('creds.update', saveCreds);
+    
+    sock.ev.on('connection.update', (update) => {
+        const { connection, lastDisconnect, qr } = update;
+        if (qr) {
+            currentQR = qr;
+        }
+        if (connection === 'close') {
+            isConnected = false;
+            pushName = "";
+            const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;
+            console.log('Connection closed due to ', lastDisconnect.error, ', reconnecting: ', shouldReconnect);
+            if (shouldReconnect) {
+                setTimeout(startSock, 5000); // Reconnect after 5 seconds
+            }
+        } else if (connection === 'open') {
+            console.log('✅ Baileys: WhatsApp connection opened successfully!');
+            isConnected = true;
+            currentQR = "";
+            pushName = sock.user.name || "Admin/Plumber";
+        }
+    });
 
-client.on('auth_failure', msg => {
-    console.error('AUTHENTICATION FAILURE', msg);
-});
+    sock.ev.on('messages.upsert', async (m) => {
+        if (m.type !== 'notify') return;
+        for (const msg of m.messages) {
+            if (!msg.message) continue;
+            
+            const from = msg.key.remoteJid;
+            const fromMe = msg.key.fromMe;
+            
+            // Get text content safely
+            const body = msg.message.conversation || 
+                         msg.message.extendedTextMessage?.text || 
+                         msg.message.imageMessage?.caption || "";
+            
+            if (!body) continue;
+
+            if (fromMe) {
+                const bodyUpper = body.trim().toUpperCase();
+                const commands = ["URGENT", "NOT URGENT", "ALL TASKS", "EMERGENCY", "NON EMERGENCY", "NO EMERGENCY", "FILTER", "MID", "ALL"];
+                if (!commands.includes(bodyUpper)) {
+                    continue;
+                }
+            }
+
+            console.log(`Received message from ${from}: ${body}`);
+
+            // Standardize remoteJid for python backend
+            const cleanFrom = from.replace("@s.whatsapp.net", "").replace("@g.us", "").replace(/[^0-9]/g, "");
+
+            const payload = {
+                From: cleanFrom,
+                Body: body
+            };
+
+            if (msg.message.imageMessage) {
+                payload.MediaUrl0 = "media_attached_but_unsupported_by_simple_forwarder";
+            }
+
+            try {
+                console.log('calling the webhook endpoint from the fastapi');
+                await fetch(`${FASTAPI_URL}/webhook`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } catch (error) {
+                console.error(`Error forwarding to webhook. Is FastAPI running on ${FASTAPI_URL}?`, error.message);
+            }
+        }
+    });
+}
+
+startSock();
 
 // Safe API endpoint to get the current QR code data
 app.get('/qr', (req, res) => {
-    if (client.info && client.info.pushname) {
-        return res.json({ status: 'connected', name: client.info.pushname });
+    if (isConnected && pushName) {
+        return res.json({ status: 'connected', name: pushName });
     }
     if (!currentQR) {
         return res.json({ status: 'pending' });
@@ -131,40 +184,6 @@ app.get('/auth', (req, res) => {
     `);
 });
 
-// Listen for all messages (including ones sent from the bot's own phone)
-client.on('message_create', async msg => {
-    try {
-        if (msg.fromMe) {
-            const bodyUpper = msg.body.trim().toUpperCase();
-            const commands = ["URGENT", "NOT URGENT", "ALL TASKS", "EMERGENCY", "NON EMERGENCY", "NO EMERGENCY", "FILTER", "MID", "ALL"];
-            if (!commands.includes(bodyUpper)) {
-                return;
-            }
-        }
-
-        console.log(`Received message from ${msg.from}: ${msg.body}`);
-
-        const payload = {
-            From: msg.from.replace("@c.us", "").replace("@g.us", ""),
-            Body: msg.body
-        };
-
-        if (msg.hasMedia) {
-            payload.MediaUrl0 = "media_attached_but_unsupported_by_simple_forwarder";
-        }
-        console.log('calling the webhook endpoint from the fastapi')
-        await fetch(`${FASTAPI_URL}/webhook`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-    } catch (error) {
-        console.error(`Error forwarding to webhook. Is FastAPI running on ${FASTAPI_URL}?`, error.message);
-    }
-});
-
-client.initialize();
-
 // API Endpoint to send messages
 app.post('/send', async (req, res) => {
     try {
@@ -174,54 +193,42 @@ app.post('/send', async (req, res) => {
             return res.status(400).json({ error: 'Number is required (e.g. 385919293138 or "me")' });
         }
 
-        let chatId = number + "@c.us";
-        if (number.toLowerCase() === "me") {
-            if (!client.info || !client.info.wid) {
-                return res.status(500).json({ error: 'Cannot send to "me" because WhatsApp is not logged in yet.' });
-            }
-            chatId = client.info.wid._serialized;
+        if (!isConnected || !sock) {
+            return res.status(503).json({ error: 'WhatsApp client is not connected' });
         }
 
-        const safeSend = async (id, content, options = {}) => {
-            try {
-                await client.sendMessage(id, content, options);
-            } catch (e) {
-                if (e.message && e.message.includes("getChat")) {
-                    console.log(`⚠️ Ignored known library bug (Message ACTUALLY SENT!): ${e.message}`);
-                } else {
-                    throw e;
-                }
+        let chatId = number;
+        if (number.toLowerCase() === "me") {
+            if (!sock.user || !sock.user.id) {
+                return res.status(500).json({ error: 'Cannot send to "me" because WhatsApp is not logged in yet.' });
             }
-        };
+            chatId = sock.user.id.split(':')[0] + "@s.whatsapp.net";
+        } else {
+            const cleanNumber = number.replace(/[^0-9]/g, "");
+            chatId = `${cleanNumber}@s.whatsapp.net`;
+        }
+
+        console.log(`Attempting to send message to ${chatId}`);
 
         if (buttons && buttons.length > 0) {
             console.log(`Sending keyword-optimized text menu to ${chatId}`);
-
             const menuHeader = text || "⚠️ *Action Required* ⚠️\nPlease select an option by replying with one of the keywords below:";
             const menuBody = buttons.map(b => `👉 *${b.toUpperCase().trim()}*`).join('\n');
             const fullMenuText = `${menuHeader}\n\n${menuBody}\n\n_Type your chosen keyword exactly as shown to respond._`;
 
-            await safeSend(chatId, fullMenuText);
+            await sock.sendMessage(chatId, { text: fullMenuText });
             console.log("✅ Keyword text menu sent successfully");
         } else if (imageUrl) {
             console.log(`Sending image to ${chatId}`);
-            try {
-                const media = await MessageMedia.fromUrl(imageUrl, { unsafeMime: true });
-                await safeSend(chatId, media, { caption: caption || text || "" });
-                console.log("✅ Image sent successfully");
-            } catch (mediaError) {
-                if (mediaError.message && mediaError.message.includes("getChat")) {
-                    console.log("⚠️ Ignored getChat error for image");
-                } else {
-                    console.error("MessageMedia failed:", mediaError.message);
-                    console.log("Falling back to text-only with image URL");
-                    const fallbackText = `${caption || text || ""}\n\nImage Attachment: ${imageUrl}`;
-                    await safeSend(chatId, fallbackText);
-                }
-            }
+            await sock.sendMessage(chatId, {
+                image: { url: imageUrl },
+                caption: caption || text || ""
+            });
+            console.log("✅ Image sent successfully");
         } else if (text) {
             console.log(`Sending text to ${chatId}`);
-            await safeSend(chatId, text);
+            await sock.sendMessage(chatId, { text: text });
+            console.log("✅ Text sent successfully");
         } else {
             return res.status(400).json({ error: 'Either text, imageUrl, or buttons is required' });
         }
