@@ -1,5 +1,5 @@
 import express from 'express';
-import makeWASocket, { useMultiFileAuthState, DisconnectReason, BufferJSON } from '@whiskeysockets/baileys';
+import makeWASocket, { useMultiFileAuthState, DisconnectReason, BufferJSON, initAuthCreds } from '@whiskeysockets/baileys';
 import pino from 'pino';
 import multer from 'multer';
 import path from 'path';
@@ -88,7 +88,7 @@ async function getAuthStateStore() {
 
         let creds = await readData('creds');
         if (!creds) {
-            creds = makeWASocket.initAuthCreds();
+            creds = initAuthCreds();
             await writeData('creds', creds);
         }
 
