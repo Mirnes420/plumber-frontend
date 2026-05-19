@@ -7,10 +7,27 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import pg from 'pg';
 
-const { Client } = pg;
+const { Pool } = pg;
 
 // Load shared environment variables
 dotenv.config({ path: '../.env' });
+
+// Global cached connection pool to prevent Supabase connection exhaustion (EMAXCONNSESSION)
+let dbPool = null;
+
+function getDbPool() {
+    if (!dbPool && process.env.DATABASE_URL) {
+        console.log("🗄️ Initializing Global PostgreSQL Pool...");
+        dbPool = new Pool({
+            connectionString: process.env.DATABASE_URL,
+            ssl: process.env.DATABASE_URL.includes('localhost') || process.env.DATABASE_URL.includes('127.0.0.1') ? false : { rejectUnauthorized: false },
+            max: 3,             // extremely conservative connection limit
+            idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: 30000
+        });
+    }
+    return dbPool;
+}
 
 // ESM equivalent for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -39,15 +56,10 @@ async function getAuthStateStore() {
     }
 
     try {
-        console.log("🗄️ Connecting to PostgreSQL Auth Store...");
-        const dbClient = new Client({
-            connectionString: process.env.DATABASE_URL,
-            ssl: process.env.DATABASE_URL.includes('localhost') || process.env.DATABASE_URL.includes('127.0.0.1') ? false : { rejectUnauthorized: false }
-        });
-        await dbClient.connect();
+        const pool = getDbPool();
 
         // Ensure table exists
-        await dbClient.query(`
+        await pool.query(`
             CREATE TABLE IF NOT EXISTS whatsapp_auth_store (
                 key VARCHAR(255) PRIMARY KEY,
                 value TEXT
@@ -56,7 +68,7 @@ async function getAuthStateStore() {
 
         const readData = async (key) => {
             try {
-                const res = await dbClient.query('SELECT value FROM whatsapp_auth_store WHERE key = $1', [key]);
+                const res = await pool.query('SELECT value FROM whatsapp_auth_store WHERE key = $1', [key]);
                 if (res.rows.length > 0) {
                     return JSON.parse(res.rows[0].value, BufferJSON.reviver);
                 }
@@ -69,7 +81,7 @@ async function getAuthStateStore() {
         const writeData = async (key, value) => {
             try {
                 const serialized = JSON.stringify(value, BufferJSON.replacer);
-                await dbClient.query(`
+                await pool.query(`
                     INSERT INTO whatsapp_auth_store (key, value)
                     VALUES ($1, $2)
                     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
@@ -81,7 +93,7 @@ async function getAuthStateStore() {
 
         const deleteData = async (key) => {
             try {
-                await dbClient.query('DELETE FROM whatsapp_auth_store WHERE key = $1', [key]);
+                await pool.query('DELETE FROM whatsapp_auth_store WHERE key = $1', [key]);
             } catch (err) {
                 console.error(`DB delete error for key ${key}:`, err.message);
             }
