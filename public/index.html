@@ -426,6 +426,12 @@
             const submitBtn = document.getElementById('submit-btn');
             const formElements = form.querySelectorAll('input, textarea, button');
 
+            // Gather Form Data FIRST before disabling fields (otherwise browser ignores disabled fields!)
+            const formData = new FormData(form);
+            if (plumberId) {
+                formData.append('plumber_id', plumberId);
+            }
+
             // Disable all form elements to prevent double submission
             formElements.forEach(el => el.disabled = true);
 
@@ -433,11 +439,6 @@
             statusMessage.style.display = 'flex';
             statusMessage.className = 'evaluating-msg';
             statusMessage.innerHTML = '<div class="loading-pulse"></div><span>Our AI is evaluating your emergency, stand tight...</span>';
-
-            const formData = new FormData(form);
-            if (plumberId) {
-                formData.append('plumber_id', plumberId);
-            }
 
             try {
                 // Submit form with robust automatic background retry logic
