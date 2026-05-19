@@ -1,10 +1,13 @@
 import express from 'express';
-import makeWASocket, { useMultiFileAuthState, DisconnectReason } from '@whiskeysockets/baileys';
+import makeWASocket, { useMultiFileAuthState, DisconnectReason, BufferJSON } from '@whiskeysockets/baileys';
 import pino from 'pino';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import pg from 'pg';
+
+const { Client } = pg;
 
 // Load shared environment variables
 dotenv.config({ path: '../.env' });
@@ -28,8 +31,114 @@ let pushName = "";
 
 const logger = pino({ level: 'silent' });
 
+async function getAuthStateStore() {
+    if (!process.env.DATABASE_URL) {
+        console.log("⚠️ DATABASE_URL not set in .env. Falling back to local MultiFileAuth...");
+        return useMultiFileAuthState(process.env.DATA_PATH || './.baileys_auth');
+    }
+
+    try {
+        console.log("🗄️ Connecting to PostgreSQL Auth Store...");
+        const dbClient = new Client({
+            connectionString: process.env.DATABASE_URL,
+            ssl: process.env.DATABASE_URL.includes('localhost') || process.env.DATABASE_URL.includes('127.0.0.1') ? false : { rejectUnauthorized: false }
+        });
+        await dbClient.connect();
+
+        // Ensure table exists
+        await dbClient.query(`
+            CREATE TABLE IF NOT EXISTS whatsapp_auth_store (
+                key VARCHAR(255) PRIMARY KEY,
+                value TEXT
+            )
+        `);
+
+        const readData = async (key) => {
+            try {
+                const res = await dbClient.query('SELECT value FROM whatsapp_auth_store WHERE key = $1', [key]);
+                if (res.rows.length > 0) {
+                    return JSON.parse(res.rows[0].value, BufferJSON.reviver);
+                }
+            } catch (err) {
+                console.error(`DB read error for key ${key}:`, err.message);
+            }
+            return null;
+        };
+
+        const writeData = async (key, value) => {
+            try {
+                const serialized = JSON.stringify(value, BufferJSON.replacer);
+                await dbClient.query(`
+                    INSERT INTO whatsapp_auth_store (key, value)
+                    VALUES ($1, $2)
+                    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+                `, [key, serialized]);
+            } catch (err) {
+                console.error(`DB write error for key ${key}:`, err.message);
+            }
+        };
+
+        const deleteData = async (key) => {
+            try {
+                await dbClient.query('DELETE FROM whatsapp_auth_store WHERE key = $1', [key]);
+            } catch (err) {
+                console.error(`DB delete error for key ${key}:`, err.message);
+            }
+        };
+
+        let creds = await readData('creds');
+        if (!creds) {
+            creds = makeWASocket.initAuthCreds();
+            await writeData('creds', creds);
+        }
+
+        return {
+            state: {
+                creds,
+                keys: {
+                    get: async (type, ids) => {
+                        const data = {};
+                        await Promise.all(
+                            ids.map(async (id) => {
+                                let value = await readData(`${type}-${id}`);
+                                if (value) {
+                                    data[id] = value;
+                                }
+                            })
+                        );
+                        return data;
+                    },
+                    set: async (data) => {
+                        const tasks = [];
+                        for (const category in data) {
+                            for (const id in data[category]) {
+                                const value = data[category][id];
+                                const key = `${category}-${id}`;
+                                if (value) {
+                                    tasks.push(writeData(key, value));
+                                } else {
+                                    tasks.push(deleteData(key));
+                                }
+                            }
+                        }
+                        await Promise.all(tasks);
+                    }
+                }
+            },
+            saveCreds: async () => {
+                await writeData('creds', creds);
+            }
+        };
+
+    } catch (err) {
+        console.error("❌ Postgres Auth Store failed to initialize:", err.message);
+        console.log("Falling back to local MultiFileAuth...");
+        return useMultiFileAuthState(process.env.DATA_PATH || './.baileys_auth');
+    }
+}
+
 async function startSock() {
-    const { state, saveCreds } = await useMultiFileAuthState(process.env.DATA_PATH || './.baileys_auth');
+    const { state, saveCreds } = await getAuthStateStore();
     
     sock = makeWASocket({
         auth: state,

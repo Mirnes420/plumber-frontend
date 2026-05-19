@@ -253,6 +253,28 @@
             color: var(--error);
             border: 1px solid rgba(244, 63, 94, 0.15);
         }
+
+        .evaluating-msg {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .loading-pulse {
+            width: 8px;
+            height: 8px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+            animation: pulse 1.2s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(0.6); opacity: 0.4; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
     </style>
 </head>
 
@@ -401,24 +423,42 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Instantly show positive optimistic response
-            statusMessage.style.display = 'block';
-            statusMessage.className = 'success-msg';
-            statusMessage.innerHTML = '<strong>✅ Emergency Request Sent!</strong> Our AI is parsing your request and paging our plumber on WhatsApp. Expect a call soon.';
+            const submitBtn = document.getElementById('submit-btn');
+            const formElements = form.querySelectorAll('input, textarea, button');
+
+            // Disable all form elements to prevent double submission
+            formElements.forEach(el => el.disabled = true);
+
+            // Instantly show evaluation state
+            statusMessage.style.display = 'flex';
+            statusMessage.className = 'evaluating-msg';
+            statusMessage.innerHTML = '<div class="loading-pulse"></div><span>Our AI is evaluating your emergency, stand tight...</span>';
 
             const formData = new FormData(form);
             if (plumberId) {
                 formData.append('plumber_id', plumberId);
             }
 
-            // Reset form fields immediately so they know it was processed
-            form.reset();
-            filePreview.style.display = 'none';
-
-            // Background Submission Process (Retries automatically)
-            submitWithRetry(formData).catch(err => {
-                console.error("Permanently failed to submit form in background:", err);
-            });
+            try {
+                // Submit form with robust automatic background retry logic
+                const result = await submitWithRetry(formData);
+                
+                // On Success: Reset form and show success message
+                form.reset();
+                filePreview.style.display = 'none';
+                
+                statusMessage.className = 'success-msg';
+                statusMessage.innerHTML = '<strong>✅ Success!</strong> Our best plumbers have been paged. Expect a phone call shortly!';
+            } catch (err) {
+                console.error("Permanently failed to submit form:", err);
+                
+                // On Error: Show error message so they can correct details and try again
+                statusMessage.className = 'error-msg';
+                statusMessage.innerHTML = '<strong>❌ Failed to register request.</strong> Please check your connection and try again.';
+            } finally {
+                // Re-enable form elements
+                formElements.forEach(el => el.disabled = false);
+            }
         });
     </script>
 </body>
