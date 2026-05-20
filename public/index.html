@@ -9,6 +9,27 @@
     <link rel="shortcut icon" type="image/x-icon" href="gemini-favi.ico">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+
+        .suggest-pill {
+            background: #121214;
+            border: 1px solid #27272a;
+            color: #a1a1aa;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .suggest-pill:hover {
+            background: #27272a;
+            color: #ffffff;
+            border-color: #a1a1aa;
+        }
+        #reset-portal-btn:hover {
+            background: #27272a !important;
+        }
+
+
         :root {
             --bg-color: #050505;
             --card-bg: #121214;
@@ -292,43 +313,71 @@
 <body>
 
     <div class="container">
-        <div class="minimal-card">
+        <div class="minimal-card" id="portal-card">
             <div class="header">
                 <div class="header-icon">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
-                        <path
-                            d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
-                        </path>
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
                         <line x1="12" y1="9" x2="12" y2="13"></line>
                         <line x1="12" y1="17" x2="12.01" y2="17"></line>
                     </svg>
                 </div>
                 <h1>Emergency Plumber</h1>
-                <p class="subtitle">Submit details. We will instantly process the issue and page our emergency plumber
-                    on WhatsApp.</p>
+                <p class="subtitle">Submit details. We will instantly process the issue and page our emergency plumber on WhatsApp.</p>
             </div>
 
             <form id="incident-form">
                 <div class="form-group">
-                    <label for="phone">WhatsApp Number</label>
+                <label for="customer_name">Your Name</label>
+                <div class="input-wrapper">
+                    <div class="input-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </div>
+                    <input type="text" id="customer_name" name="customer_name" placeholder="e.g. John Doe" required>
+                </div>
+            </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
                     <div class="input-wrapper">
                         <div class="input-icon">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path
-                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
-                                </path>
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                             </svg>
                         </div>
-                        <input type="tel" id="phone" name="phone" placeholder="e.g. 385919293138" required>
+                        <input type="tel" id="phone" name="phone" placeholder="e.g. +385919293138" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="location">Emergency Address / Location</label>
+                    <div class="input-wrapper">
+                        <div class="input-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                        </div>
+                        <input type="text" id="location" name="location" placeholder="Street name, apartment unit, city..." required>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="description">Problem Description</label>
-                    <textarea id="description" name="description" placeholder="Describe the leak, block or damage..."
-                        required></textarea>
+                    <textarea id="description" name="description" placeholder="Describe the leak, block or damage..." required></textarea>
+                    
+                    <div class="pill-wrapper" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
+                    <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Burst pipe under sink gushing hot water and kitchen flooded">💦 Burst Pipe</button>
+                    <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Main sewage line backing up into the basement floor drain">💩 Sewer Backup</button>
+                    <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Water heater tank leaking from base and running cold">🔥 Water Heater Leak</button>
+                    <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Main toilet clogged up and overflowing onto bathroom floor">🚽 Clogged Toilet</button>
+                    <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Kitchen faucet leaking from handles with a steady slow drip">💧 Slow Faucet Drip</button>
+                </div>
                 </div>
 
                 <div class="form-group">
@@ -345,7 +394,7 @@
                             <span>Upload Image File</span>
                         </div>
                     </div>
-                    <div id="file-preview">File selected</div>
+                    <div id="file-preview" style="display: none;">File selected</div>
                 </div>
 
                 <button type="submit" id="submit-btn">
@@ -357,8 +406,20 @@
                     </svg>
                 </button>
 
-                <div id="status-message"></div>
+                <div id="status-message" style="display: none;"></div>
             </form>
+        </div>
+
+        <div class="minimal-card success-screen" id="success-card" style="display: none; text-align: center; padding: 40px 20px;">
+            <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
+            <h1 style="color: var(--success); margin-bottom: 12px;">Request Registered!</h1>
+            <p style="color: var(--text-primary); font-size: 16px; margin-bottom: 8px; font-weight: 500;">Our best plumbers have been paged.</p>
+            <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 30px; max-width: 340px; margin-left: auto; margin-right: auto;">
+                Expect a phone call or WhatsApp updates shortly. You can safely close this screen now.
+            </p>
+            <button type="button" id="reset-portal-btn" style="background: var(--border-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; transition: background 0.2s;">
+                Submit Another Issue
+            </button>
         </div>
     </div>
 
@@ -367,15 +428,17 @@
         const fileInput = document.getElementById('image');
         const filePreview = document.getElementById('file-preview');
         const statusMessage = document.getElementById('status-message');
+        
+        // Form layout toggles
+        const portalCard = document.getElementById('portal-card');
+        const successCard = document.getElementById('success-card');
+        const resetPortalBtn = document.getElementById('reset-portal-btn');
 
-        // Extract plumber ID from browser URL query parameter or URL path (e.g., /id=1)
         function getPlumberId() {
-            // First check query string ?plumber=X or ?id=X
             const urlParams = new URLSearchParams(window.location.search);
             let id = urlParams.get('plumber') || urlParams.get('id');
             if (id) return id;
 
-            // Second check path name split (e.g., /id=1)
             const pathParts = window.location.pathname.split('/');
             const lastPart = pathParts[pathParts.length - 1];
             if (lastPart.startsWith('id=')) {
@@ -385,7 +448,13 @@
         }
 
         const plumberId = getPlumberId();
-        console.log("Detected Plumber ID:", plumberId || "None");
+
+        // ADDED: Pill click interpolation listeners
+        document.querySelectorAll('.suggest-pill').forEach(pill => {
+            pill.addEventListener('click', function() {
+                document.getElementById('description').value = this.getAttribute('data-text');
+            });
+        });
 
         fileInput.addEventListener('change', function () {
             if (this.files && this.files[0]) {
@@ -396,7 +465,6 @@
             }
         });
 
-        // Robust background submit with retry logic (for cold starts)
         async function submitWithRetry(formData, attempt = 1, maxAttempts = 10, delayMs = 8000) {
             console.log(`Background submission attempt ${attempt}/${maxAttempts}...`);
             try {
@@ -416,41 +484,31 @@
                     throw new Error(result.error || `HTTP error ${response.status}`);
                 }
 
-                console.log("✅ Background submission successfully resolved:", result);
                 return result;
             } catch (error) {
-                console.error(`⚠️ Attempt ${attempt} failed:`, error.message);
                 if (attempt < maxAttempts) {
-                    console.log(`Retrying background submission in ${delayMs / 1000}s...`);
                     await new Promise(resolve => setTimeout(resolve, delayMs));
                     return submitWithRetry(formData, attempt + 1, maxAttempts, delayMs);
                 } else {
-                    console.error("❌ Background submission failed permanently after maximum retries.");
                     throw new Error("Failed to deliver request. Please verify your connection.");
                 }
             }
         }
 
-      form.addEventListener('submit', async (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const submitBtn = document.getElementById('submit-btn');
             const formElements = form.querySelectorAll('input, textarea, button');
-
-            // Gather Form Data FIRST before disabling fields
             const formData = new FormData(form);
             if (plumberId) {
                 formData.append('plumber_id', plumberId);
             }
 
-            // Disable all form elements to prevent double submission
             formElements.forEach(el => el.disabled = true);
 
-            // Instantly show evaluation state
             statusMessage.style.display = 'flex';
             statusMessage.className = 'evaluating-msg';
             
-            // Array of customer updates to rotate through
             const loadingMessages = [
                 "Our AI is evaluating your emergency, notifying experts, stand tight...",
                 "If it's an emergency, we will page our experts immediately. Expect a call soon.",
@@ -461,39 +519,45 @@
             let messageIndex = 0;
             const updateMessageText = () => {
                 statusMessage.innerHTML = `<div class="loading-pulse"></div><span>${loadingMessages[messageIndex]}</span>`;
-                // Cycle to the next message, loop back to the start if it takes too long
                 messageIndex = (messageIndex + 1) % loadingMessages.length;
             };
 
-            // Set initial message instantly
             updateMessageText();
-            
-            // Rotate messages every 4.5 seconds
             const messageRotationInterval = setInterval(updateMessageText, 4500);
 
             try {
-                // Submit form with robust automatic background retry logic
                 const result = await submitWithRetry(formData);
 
-                // On Success: Reset form and show success message
+                // Clear ongoing loading loops
+                clearInterval(messageRotationInterval);
+
+                // CHANGED: Hide the entry layout completely and manifest the success block at center screen
+                portalCard.style.display = 'none';
+                successCard.style.display = 'block';
+
                 form.reset();
                 if (filePreview) filePreview.style.display = 'none';
-
-                statusMessage.className = 'success-msg';
-                statusMessage.innerHTML = '<strong>✅ Success! </strong> Our best plumbers have been paged. Expect a phone call shortly!';
             } catch (err) {
                 console.error("Permanently failed to submit form:", err);
+                clearInterval(messageRotationInterval);
 
-                // On Error: Show error message so they can correct details and try again
                 statusMessage.className = 'error-msg';
                 statusMessage.innerHTML = '<strong>❌ Failed to register request.</strong> Please check your connection and try again.';
-            } finally {
-                // CRITICAL: Clear the interval loop so messages stop changing after completion/failure
-                clearInterval(messageRotationInterval);
-                
-                // Re-enable form elements
                 formElements.forEach(el => el.disabled = false);
+            } finally {
+                // Keep element inputs safe on exit
             }
+        });
+
+        // ADDED: Reset return path listener logic
+        resetPortalBtn.addEventListener('click', () => {
+            successCard.style.display = 'none';
+            statusMessage.style.display = 'none';
+            portalCard.style.display = 'block';
+            
+            // Re-enable form elements for structural baseline inputs
+            const formElements = form.querySelectorAll('input, textarea, button');
+            formElements.forEach(el => el.disabled = false);
         });
     </script>
 </body>

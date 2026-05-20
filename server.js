@@ -152,15 +152,15 @@ async function getAuthStateStore() {
 
 async function startSock() {
     const { state, saveCreds } = await getAuthStateStore();
-    
+
     sock = makeWASocket({
         auth: state,
         printQRInTerminal: false,
         logger: logger
     });
-    
+
     sock.ev.on('creds.update', saveCreds);
-    
+
     sock.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect, qr } = update;
         if (qr) {
@@ -186,15 +186,15 @@ async function startSock() {
         if (m.type !== 'notify') return;
         for (const msg of m.messages) {
             if (!msg.message) continue;
-            
+
             const from = msg.key.remoteJid;
             const fromMe = msg.key.fromMe;
-            
+
             // Get text content safely
-            const body = msg.message.conversation || 
-                         msg.message.extendedTextMessage?.text || 
-                         msg.message.imageMessage?.caption || "";
-            
+            const body = msg.message.conversation ||
+                msg.message.extendedTextMessage?.text ||
+                msg.message.imageMessage?.caption || "";
+
             if (!body) continue;
 
             if (fromMe) {
@@ -359,6 +359,7 @@ app.post('/send', async (req, res) => {
     try {
         const { number, text, imageUrl, caption, buttons } = req.body;
 
+
         if (!number) {
             return res.status(400).json({ error: 'Number is required (e.g. 385919293138 or "me")' });
         }
@@ -421,12 +422,21 @@ app.post('/send', async (req, res) => {
 // Endpoint to receive HTML form submissions and forward to FastAPI
 app.post('/submit-form', upload.single('image'), async (req, res) => {
     try {
-        const { phone, description, plumber_id } = req.body;
-        console.log(`🌐 Received web form from ${phone} (Plumber ID: ${plumber_id || 'None'})`);
+        // CHANGED: Destructured customer_name and location from the request body
+        const { phone, description, location, customer_name, plumber_id } = req.body;
+        console.log(`🌐 Received web form from ${customer_name || 'Unknown'} (${phone}) [Plumber ID: ${plumber_id || 'None'}]`);
 
         const formData = new FormData();
         formData.append('phone', phone);
         formData.append('description', description);
+        
+        // CHANGED: Conditionally append location and customer_name if they exist
+        if (location) {
+            formData.append('location', location);
+        }
+        if (customer_name) {
+            formData.append('customer_name', customer_name);
+        }
         if (plumber_id) {
             formData.append('plumber_id', plumber_id);
         }
@@ -435,12 +445,12 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
             const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
             formData.append('image', blob, req.file.originalname);
         }
-        
+
         // Retry logic for Render cold starts (free tier sleeps after 15min)
         let result = null;
         let lastError = null;
         const maxRetries = 3;
-        
+
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 console.log(`Attempt ${attempt}/${maxRetries}: calling FastAPI /api/incident`);
@@ -474,7 +484,7 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
                 }
             }
         }
-        
+
         if (!result) {
             throw new Error(lastError || 'FastAPI server did not respond after retries.');
         }
@@ -485,6 +495,7 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
