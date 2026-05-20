@@ -272,8 +272,17 @@
         }
 
         @keyframes pulse {
-            0%, 100% { transform: scale(0.6); opacity: 0.4; }
-            50% { transform: scale(1.2); opacity: 1; }
+
+            0%,
+            100% {
+                transform: scale(0.6);
+                opacity: 0.4;
+            }
+
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
         }
     </style>
 </head>
@@ -363,7 +372,7 @@
             const urlParams = new URLSearchParams(window.location.search);
             let id = urlParams.get('plumber') || urlParams.get('id');
             if (id) return id;
-            
+
             // Second check path name split (e.g., /id=1)
             const pathParts = window.location.pathname.split('/');
             const lastPart = pathParts[pathParts.length - 1];
@@ -404,7 +413,7 @@
                 if (!response.ok) {
                     throw new Error(result.error || `HTTP error ${response.status}`);
                 }
-                
+
                 console.log("✅ Background submission successfully resolved:", result);
                 return result;
             } catch (error) {
@@ -420,13 +429,13 @@
             }
         }
 
-        form.addEventListener('submit', async (e) => {
+      form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const submitBtn = document.getElementById('submit-btn');
             const formElements = form.querySelectorAll('input, textarea, button');
 
-            // Gather Form Data FIRST before disabling fields (otherwise browser ignores disabled fields!)
+            // Gather Form Data FIRST before disabling fields
             const formData = new FormData(form);
             if (plumberId) {
                 formData.append('plumber_id', plumberId);
@@ -438,25 +447,48 @@
             // Instantly show evaluation state
             statusMessage.style.display = 'flex';
             statusMessage.className = 'evaluating-msg';
-            statusMessage.innerHTML = '<div class="loading-pulse"></div><span>Our AI is evaluating your emergency, stand tight...</span>';
+            
+            // Array of customer updates to rotate through
+            const loadingMessages = [
+                "Our AI is evaluating your emergency, notifying experts, stand tight...",
+                "If it's an emergency, we will page our experts immediately. Expect a call soon.",
+                "Either way, you can close this window. You will get a WhatsApp message when it's done.",
+                "If you don't have WhatsApp, don't worry! We will still notify our experts of your issue directly."
+            ];
+            
+            let messageIndex = 0;
+            const updateMessageText = () => {
+                statusMessage.innerHTML = `<div class="loading-pulse"></div><span>${loadingMessages[messageIndex]}</span>`;
+                // Cycle to the next message, loop back to the start if it takes too long
+                messageIndex = (messageIndex + 1) % loadingMessages.length;
+            };
+
+            // Set initial message instantly
+            updateMessageText();
+            
+            // Rotate messages every 4.5 seconds
+            const messageRotationInterval = setInterval(updateMessageText, 4500);
 
             try {
                 // Submit form with robust automatic background retry logic
                 const result = await submitWithRetry(formData);
-                
+
                 // On Success: Reset form and show success message
                 form.reset();
-                filePreview.style.display = 'none';
-                
+                if (filePreview) filePreview.style.display = 'none';
+
                 statusMessage.className = 'success-msg';
-                statusMessage.innerHTML = '<strong>✅ Success!</strong> Our best plumbers have been paged. Expect a phone call shortly!';
+                statusMessage.innerHTML = '<strong>✅ Success! </strong> Our best plumbers have been paged. Expect a phone call shortly!';
             } catch (err) {
                 console.error("Permanently failed to submit form:", err);
-                
+
                 // On Error: Show error message so they can correct details and try again
                 statusMessage.className = 'error-msg';
                 statusMessage.innerHTML = '<strong>❌ Failed to register request.</strong> Please check your connection and try again.';
             } finally {
+                // CRITICAL: Clear the interval loop so messages stop changing after completion/failure
+                clearInterval(messageRotationInterval);
+                
                 // Re-enable form elements
                 formElements.forEach(el => el.disabled = false);
             }
