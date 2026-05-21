@@ -361,7 +361,7 @@ app.post('/send', async (req, res) => {
 
 
         if (!number) {
-            return res.status(400).json({ error: 'Number is required (e.g. 385919293138 or "me")' });
+            return res.status(400).json({ error: 'Number is required (e.g. +385919293138 or "me")' });
         }
 
         if (!isConnected || !sock) {
