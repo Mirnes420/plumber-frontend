@@ -435,6 +435,7 @@
         ];
 
         // LIVE INPUT ENGINE: Intercepts and corrects errors as they type
+       // LIVE INPUT ENGINE: Intercepts and corrects errors based on international context
         phoneInput.addEventListener('input', function(e) {
             let value = this.value;
             
@@ -449,10 +450,13 @@
             // Extract raw base digits
             let digitsOnly = clean.replace(/\D/g, '');
 
-            // AUTO-CORRECTION TRIGGER: 
-            // If they enter exactly 10 digits and the first 3 match a North American Area code,
-            // they forgot the country code. Inject '1' automatically inside the field right now.
-            if (digitsOnly.length === 10) {
+            // AUTO-CORRECTION MATRIX: 
+            // Only flag North American formatting if the input DOES NOT start with common European/Global prefixes
+            const structuralInternationalPrefixes = ['33', '34', '39', '44', '49', '385', '387']; // France, Spain, Italy, UK, Germany, Croatia, Bosnia...
+            
+            let isExplicitlyInternational = structuralInternationalPrefixes.some(prefix => digitsOnly.startsWith(prefix));
+
+            if (digitsOnly.length === 10 && !isExplicitlyInternational) {
                 let firstThree = digitsOnly.substring(0, 3);
                 if (northAmericanAreaCodes.includes(firstThree)) {
                     digitsOnly = '1' + digitsOnly;
