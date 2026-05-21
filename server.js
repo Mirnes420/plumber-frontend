@@ -420,9 +420,9 @@ app.post('/send', async (req, res) => {
 });
 
 // Endpoint to receive HTML form submissions and forward to FastAPI
+// Endpoint to receive HTML form submissions and forward to Python Engine
 app.post('/submit-form', upload.single('image'), async (req, res) => {
     try {
-        // CHANGED: Destructured customer_name and location from the request body
         const { phone, description, location, customer_name, plumber_id } = req.body;
         console.log(`🌐 Received web form from ${customer_name || 'Unknown'} (${phone}) [Plumber ID: ${plumber_id || 'None'}]`);
 
@@ -430,23 +430,15 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
         formData.append('phone', phone);
         formData.append('description', description);
         
-        // CHANGED: Conditionally append location and customer_name if they exist
-        if (location) {
-            formData.append('location', location);
-        }
-        if (customer_name) {
-            formData.append('customer_name', customer_name);
-        }
-        if (plumber_id) {
-            formData.append('plumber_id', plumber_id);
-        }
+        if (location) formData.append('location', location);
+        if (customer_name) formData.append('customer_name', customer_name);
+        if (plumber_id) formData.append('plumber_id', plumber_id);
 
         if (req.file) {
             const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
             formData.append('image', blob, req.file.originalname);
         }
 
-        // Retry logic for Render cold starts (free tier sleeps after 15min)
         let result = null;
         let lastError = null;
         const maxRetries = 3;
@@ -464,29 +456,33 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
                 if (contentType && contentType.includes("application/json")) {
                     result = await response.json();
                     if (!response.ok) {
-                        console.error("FastAPI Error Response:", JSON.stringify(result, null, 2));
-                        throw new Error(result.detail ? JSON.stringify(result.detail) : (result.message || 'FastAPI rejected the request'));
+                        throw new Error(result.detail ? JSON.stringify(result.detail) : 'FastAPI rejected the request');
                     }
-                    break; // Success!
+                    break;
                 } else {
-                    const text = await response.text();
-                    console.log(`Attempt ${attempt}: Got non-JSON response (Status ${response.status}). Server may still be waking up...`);
-                    lastError = `FastAPI returned status ${response.status} (not JSON). Server may be cold-starting.`;
-                    if (attempt < maxRetries) {
-                        await new Promise(r => setTimeout(r, 5000)); // Wait 5s before retry
-                    }
+                    await response.text();
+                    if (attempt < maxRetries) await new Promise(r => setTimeout(r, 5000));
                 }
             } catch (fetchErr) {
-                console.log(`Attempt ${attempt}: Fetch failed: ${fetchErr.message}`);
                 lastError = fetchErr.message;
-                if (attempt < maxRetries) {
-                    await new Promise(r => setTimeout(r, 5000));
-                }
+                if (attempt < maxRetries) await new Promise(r => setTimeout(r, 5000));
             }
         }
 
-        if (!result) {
-            throw new Error(lastError || 'FastAPI server did not respond after retries.');
+        if (!result) throw new Error(lastError || 'FastAPI server did not respond.');
+
+        // DISPATCH VIA WHATSAPP IMMEDIATELY WITH DYNAMIC GEAR DATA
+        if (isConnected && sock) {
+            const targetNum = phone.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+            const messageText = `🚨 *PLUMBTRIAGE EMERGENCY DISPATCH* 🚨\n\n` +
+                                `*👤 CUSTOMER:* ${customer_name || 'Emergency Site'}\n` +
+                                `*📍 LOCATION:* ${location || 'Not provided'}\n` +
+                                `*📝 PROFILE:* "${description}"\n\n` +
+                                `*🤖 AI DIAGNOSIS:* ${result.summary || 'Unspecified Emergency'}\n` +
+                                `*🛠️ REQUIRED GEAR:* ${result.gear || 'Bring baseline diagnostic gear.'}`;
+            
+            await sock.sendMessage(targetNum, { text: messageText });
+            console.log(`⚡ Automated dispatch message containing gear payload pushed to ${targetNum}`);
         }
 
         res.json({ success: true, result });
