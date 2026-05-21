@@ -424,123 +424,138 @@
     </style>
 
     <script>
-        const form = document.getElementById('incident-form');
-        const fileInput = document.getElementById('image');
-        const filePreview = document.getElementById('file-preview');
-        const phoneInput = document.getElementById('phone');
-        const phoneError = document.getElementById('phone-error');
-        
-        const portalCard = document.getElementById('portal-card');
-        const successCard = document.getElementById('success-card');
-        const resetPortalBtn = document.getElementById('reset-portal-btn');
+  const form = document.getElementById('incident-form');
+const fileInput = document.getElementById('image');
+const filePreview = document.getElementById('file-preview');
+const phoneInput = document.getElementById('phone');
+const phoneError = document.getElementById('phone-error');
 
-        // ADDED: Initialize international telephone input library configuration
-        const iti = window.intlTelInput(phoneInput, {
-            initialCountry: "auto",
-            geoIpLookup: function(success, failure) {
-                fetch("https://ipapi.co/json/")
-                    .then(res => res.json())
-                    .then(data => success(data.country_code))
-                    .catch(() => success("US"));
-            },
-            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js"
+const portalCard = document.getElementById('portal-card');
+const successCard = document.getElementById('success-card');
+const resetPortalBtn = document.getElementById('reset-portal-btn');
+
+// Initialize international telephone input library configuration
+const iti = window.intlTelInput(phoneInput, {
+    initialCountry: "auto",
+    geoIpLookup: function(success, failure) {
+        fetch("https://ipapi.co/json/")
+            .then(res => res.json())
+            .then(data => success(data.country_code))
+            .catch(() => success("US"));
+    },
+    utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js"
+});
+
+function getPlumberId() {
+    const urlParams = new URLSearchParams(window.location.search);
+    let id = urlParams.get('plumber') || urlParams.get('id');
+    if (id) return id;
+
+    const pathParts = window.location.pathname.split('/');
+    const lastPart = pathParts[pathParts.length - 1];
+    if (lastPart.startsWith('id=')) {
+        return lastPart.split('=')[1];
+    }
+    return '';
+}
+
+const plumberId = getPlumberId();
+
+// FIXED: Clearer target mapping for suggestion pills using explicit value assignments
+document.querySelectorAll('.suggest-pill').forEach(pill => {
+    pill.addEventListener('click', function(e) {
+        e.preventDefault(); // Stop any accidental form submissions
+        const textToInject = this.getAttribute('data-text');
+        const targetTextArea = document.getElementById('description');
+        if (targetTextArea) {
+            targetTextArea.value = textToInject;
+        }
+    });
+});
+
+fileInput.addEventListener('change', function () {
+    if (this.files && this.files[0]) {
+        filePreview.textContent = `Selected: ${this.files[0].name}`;
+        filePreview.style.display = 'block';
+    } else {
+        filePreview.style.display = 'none';
+    }
+});
+
+async function submitWithRetry(formData, attempt = 1, maxAttempts = 10, delayMs = 8000) {
+    try {
+        const response = await fetch('/submit-form', {
+            method: 'POST',
+            body: formData
         });
 
-        function getPlumberId() {
-            const urlParams = new URLSearchParams(window.location.search);
-            let id = urlParams.get('plumber') || urlParams.get('id');
-            if (id) return id;
+        const contentType = response.headers.get("content-type");
+        let result = {};
 
-            const pathParts = window.location.pathname.split('/');
-            const lastPart = pathParts[pathParts.length - 1];
-            if (lastPart.startsWith('id=')) {
-                return lastPart.split('=')[1];
-            }
-            return '';
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            result = await response.json();
         }
 
-        const plumberId = getPlumberId();
-
-        document.querySelectorAll('.suggest-pill').forEach(pill => {
-            pill.addEventListener('click', function() {
-                document.getElementById('description').value = this.getAttribute('data-text');
-            });
-        });
-
-        fileInput.addEventListener('change', function () {
-            if (this.files && this.files[0]) {
-                filePreview.textContent = `Selected: ${this.files[0].name}`;
-                filePreview.style.display = 'block';
-            } else {
-                filePreview.style.display = 'none';
-            }
-        });
-
-        async function submitWithRetry(formData, attempt = 1, maxAttempts = 10, delayMs = 8000) {
-            try {
-                const response = await fetch('/submit-form', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const contentType = response.headers.get("content-type");
-                let result = {};
-
-                if (contentType && contentType.indexOf("application/json") !== -1) {
-                    result = await response.json();
-                }
-
-                if (!response.ok) {
-                    throw new Error(result.error || `HTTP error ${response.status}`);
-                }
-
-                return result;
-            } catch (error) {
-                if (attempt < maxAttempts) {
-                    await new Promise(resolve => setTimeout(resolve, delayMs));
-                    return submitWithRetry(formData, attempt + 1, maxAttempts, delayMs);
-                } else {
-                    console.error("Background delivery permanently failed:", error.message);
-                }
-            }
+        if (!response.ok) {
+            throw new Error(result.error || `HTTP error ${response.status}`);
         }
 
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
+        return result;
+    } catch (error) {
+        if (attempt < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+            return submitWithRetry(formData, attempt + 1, maxAttempts, delayMs);
+        } else {
+            console.error("Background delivery permanently failed:", error.message);
+        }
+    }
+}
 
-            // CHANGED: Validate country prefix code structure with the library validation utility
-            phoneError.style.display = 'none';
-            if (!iti.isValidNumber()) {
-                phoneError.style.display = 'block';
-                phoneInput.focus();
-                return; // Stop form execution right here
-            }
+// FIXED: Hard stop validation conditions + reliable manual FormData construction
+form.addEventListener('submit', (e) => {
+    e.preventDefault(); // Stop immediate native form execution
 
-            const formData = new FormData(form);
-            
-            // CHANGED: Override the raw input field value inside payload with the fully qualified E.164 number (e.g., +385919293138)
-            formData.set('phone', iti.getNumber());
+    // 1. Force international number validation check
+    phoneError.style.display = 'none';
+    if (!iti.isValidNumber()) {
+        phoneError.style.display = 'block';
+        phoneInput.focus();
+        return false; // HARD STOP: Prevents form changing to success screen
+    }
 
-            if (plumberId) {
-                formData.append('plumber_id', plumberId);
-            }
+    // 2. Build FormData manually to prevent extraction errors caused by DOM wrapping variations
+    const formData = new FormData();
+    formData.append('customer_name', document.getElementById('customer_name').value);
+    formData.append('phone', iti.getNumber()); // Extracts completely clean international format (+385...)
+    formData.append('location', document.getElementById('location').value);
+    formData.append('description', document.getElementById('description').value);
+    
+    if (fileInput.files[0]) {
+        formData.append('image', fileInput.files[0]);
+    }
+    if (plumberId) {
+        formData.append('plumber_id', plumberId);
+    }
 
-            portalCard.style.display = 'none';
-            successCard.style.display = 'block';
+    // 3. Trigger immediate interface screen flip
+    portalCard.style.display = 'none';
+    successCard.style.display = 'block';
 
-            submitWithRetry(formData);
+    // 4. Dispatch payload out to background processes asynchronously
+    submitWithRetry(formData);
 
-            form.reset();
-            if (filePreview) filePreview.style.display = 'none';
-        });
+    // 5. Clean interface states
+    form.reset();
+    if (filePreview) filePreview.style.display = 'none';
+});
 
-        resetPortalBtn.addEventListener('click', () => {
-            successCard.style.display = 'none';
-            portalCard.style.display = 'block';
-            
-            const formElements = form.querySelectorAll('input, textarea, button');
-            formElements.forEach(el => el.disabled = false);
-        });
+resetPortalBtn.addEventListener('click', () => {
+    successCard.style.display = 'none';
+    portalCard.style.display = 'block';
+    
+    const formElements = form.querySelectorAll('input, textarea, button');
+    formElements.forEach(el => el.disabled = false);
+});
     </script>
 </body>
 
