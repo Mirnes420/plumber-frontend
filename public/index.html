@@ -38,6 +38,7 @@
             --accent-hover: #e4e4e7;
             --success: #09f195;
             --error: #f43f5e;
+            --warning: #fbbf24;
         }
 
         * {
@@ -194,10 +195,7 @@
 
         .file-upload-wrapper input[type="file"] {
             position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
+            left: 0; top: 0; width: 100%; height: 100%;
             opacity: 0;
             cursor: pointer;
         }
@@ -286,15 +284,19 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="phone">Phone Number (Include Country Code)</label>
+                    <label for="phone">Phone Number</label>
                     <div class="input-wrapper">
-                        <div class="input-icon" style="color: var(--accent-white); font-weight: 600; font-size: 16px; left: 1.1rem;">
+                        <div class="input-icon" style="color: var(--text-secondary); font-weight: 600; font-size: 16px; left: 1.1rem;">
                             +
                         </div>
-                        <input type="tel" id="phone" name="phone" placeholder="12025550143" style="padding-left: 2.2rem;" required>
+                        <input type="tel" id="phone" name="phone" placeholder="1 613 555 0143 (Country Code + Number)" style="padding-left: 2.2rem;" required>
+                    </div>
+                    
+                    <div id="phone-hint" style="color: var(--text-secondary); font-size: 12px; margin-top: 6px; display: block; font-weight: 400; padding-left: 4px;">
+                        Type your country code first. For USA/Canada, type <span style="color: var(--accent-white); font-weight:600;">1</span> before your area code.
                     </div>
                     <div id="phone-error" style="color: var(--error); font-size: 13px; margin-top: 6px; display: none; font-weight: 500;">
-                        ❌ Missing or Invalid Country Code! Please check your input sequence.
+                        ❌ Invalid Format.
                     </div>
                 </div>
 
@@ -371,6 +373,7 @@
         const filePreview = document.getElementById('file-preview');
         const phoneInput = document.getElementById('phone');
         const phoneError = document.getElementById('phone-error');
+        const phoneHint = document.getElementById('phone-hint');
         
         const portalCard = document.getElementById('portal-card');
         const successCard = document.getElementById('success-card');
@@ -408,24 +411,62 @@
             }
         });
 
+        // FIXED: Real-time validation engine analyzes input patterns as the user types
+        function validatePhoneNumber(inputValue) {
+            // Strip out non-numeric characters to analyze the core digits
+            let digits = inputValue.replace(/\D/g, '');
+            
+            // Catch condition: User typed exactly 10 digits starting with a known Canadian/US area code (like 613, 416, 212)
+            // If they did this, they clearly forgot the "1" country code at the front.
+            if (digits.length === 10 && (digits.startsWith('613') || digits.startsWith('416') || digits.startsWith('905') || digits.startsWith('212') || digits.startsWith('312') || digits.startsWith('778') || digits.startsWith('514'))) {
+                return {
+                    isValid: false,
+                    message: "⚠️ Did you forget the country code? For Canada/US, please add a '1' at the start (e.g., 1613...)."
+                };
+            }
+
+            if (digits.length < 8) {
+                return {
+                    isValid: false,
+                    message: "❌ Phone number is too short. Include country code + area code."
+                };
+            }
+
+            if (digits.length > 15) {
+                return {
+                    isValid: false,
+                    message: "❌ Phone number is too long."
+                };
+            }
+
+            return { isValid: true, cleanDigits: digits };
+        }
+
+        // Live input event listener to instantly clean up errors when they fix their mistake
+        phoneInput.addEventListener('input', function() {
+            if (phoneError.style.display === 'block') {
+                const check = validatePhoneNumber(this.value);
+                if (check.isValid) {
+                    phoneError.style.display = 'none';
+                    phoneHint.style.display = 'block';
+                }
+            }
+        });
+
         async function submitWithRetry(formData, attempt = 1, maxAttempts = 10, delayMs = 8000) {
             try {
                 const response = await fetch('/submit-form', {
                     method: 'POST',
                     body: formData
                 });
-
                 const contentType = response.headers.get("content-type");
                 let result = {};
-
                 if (contentType && contentType.indexOf("application/json") !== -1) {
                     result = await response.json();
                 }
-
                 if (!response.ok) {
                     throw new Error(result.error || `HTTP error ${response.status}`);
                 }
-
                 return result;
             } catch (error) {
                 if (attempt < maxAttempts) {
@@ -440,29 +481,23 @@
         form.addEventListener('submit', (e) => {
             e.preventDefault();
 
-            // Strips out spaces, brackets, or dashes formatting variations instantly
-            let cleanPhone = phoneInput.value.trim().replace(/[\s\-\(\)]/g, '');
-            
-            // CHANGED: Checks if it lacks a '+'. If it doesn't have one, prepend it automatically
-            if (!cleanPhone.startsWith('+')) {
-                cleanPhone = '+' + cleanPhone;
-            }
+            const validation = validatePhoneNumber(phoneInput.value);
 
-            // Validates length of complete string ensuring country code is included (min 8 digits up to 15 max)
-            const validationRegex = /^\+[1-9]\d{7,14}$/;
-
-            phoneError.style.display = 'none';
-
-            if (!validationRegex.test(cleanPhone)) {
+            if (!validation.isValid) {
+                phoneHint.style.display = 'none';
+                phoneError.textContent = validation.message;
                 phoneError.style.display = 'block';
                 phoneInput.focus();
-                return false; 
+                return false; // HARD CEILING: Prevents submission and keeps form state active
             }
 
-            // Build FormData manually to explicitly map values safely
+            // Construct the final payload safely
+            // We append the '+' to the thoroughly validated digits sequence
+            const dynamicCleanInternationalFormat = '+' + validation.cleanDigits;
+
             const formData = new FormData();
             formData.append('customer_name', document.getElementById('customer_name').value);
-            formData.append('phone', cleanPhone); // Transmits complete formatted international phone string (e.g., +12025550143)
+            formData.append('phone', dynamicCleanInternationalFormat); 
             formData.append('location', document.getElementById('location').value);
             formData.append('description', document.getElementById('description').value);
             
@@ -485,6 +520,8 @@
         resetPortalBtn.addEventListener('click', () => {
             successCard.style.display = 'none';
             portalCard.style.display = 'block';
+            phoneError.style.display = 'none';
+            phoneHint.style.display = 'block';
             
             const formElements = form.querySelectorAll('input, textarea, button');
             formElements.forEach(el => el.disabled = false);
