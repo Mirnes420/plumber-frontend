@@ -471,19 +471,6 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
 
         if (!result) throw new Error(lastError || 'FastAPI server did not respond.');
 
-        // DISPATCH VIA WHATSAPP IMMEDIATELY WITH DYNAMIC GEAR DATA
-        if (isConnected && sock) {
-            const targetNum = phone.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
-            const messageText = `🚨 *PLUMBTRIAGE EMERGENCY DISPATCH* 🚨\n\n` +
-                                `*👤 CUSTOMER:* ${customer_name || 'Emergency Site'}\n` +
-                                `*📍 LOCATION:* ${location || 'Not provided'}\n` +
-                                `*📝 PROFILE:* "${description}"\n\n` +
-                                `*🤖 AI DIAGNOSIS:* ${result.summary || 'Unspecified Emergency'}\n` +
-                                `*🛠️ REQUIRED GEAR:* ${result.gear || 'Bring baseline diagnostic gear.'}`;
-            
-            await sock.sendMessage(targetNum, { text: messageText });
-            console.log(`⚡ Automated dispatch message containing gear payload pushed to ${targetNum}`);
-        }
 
         res.json({ success: true, result });
     } catch (error) {
