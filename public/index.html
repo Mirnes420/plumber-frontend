@@ -289,14 +289,14 @@
                         <div class="input-icon" style="color: var(--text-secondary); font-weight: 600; font-size: 16px; left: 1.1rem;">
                             +
                         </div>
-                        <input type="tel" id="phone" name="phone" placeholder="1 613 555 0143 (Country Code + Number)" style="padding-left: 2.2rem;" required>
+                        <input type="tel" id="phone" name="phone" placeholder="1 613 555 0143" style="padding-left: 2.2rem;" required>
                     </div>
                     
                     <div id="phone-hint" style="color: var(--text-secondary); font-size: 12px; margin-top: 6px; display: block; font-weight: 400; padding-left: 4px;">
-                        Type your country code first. For USA/Canada, type <span style="color: var(--accent-white); font-weight:600;">1</span> before your area code.
+                        Enter country code + phone number.
                     </div>
                     <div id="phone-error" style="color: var(--error); font-size: 13px; margin-top: 6px; display: none; font-weight: 500;">
-                        ❌ Invalid Format.
+                        ❌ Invalid Number format.
                     </div>
                 </div>
 
@@ -411,45 +411,69 @@
             }
         });
 
-        // FIXED: Real-time validation engine analyzes input patterns as the user types
-        function validatePhoneNumber(inputValue) {
-            // Strip out non-numeric characters to analyze the core digits
-            let digits = inputValue.replace(/\D/g, '');
+        // List of all North American (NANP) Area Codes to catch missing '1' country code
+        const northAmericanAreaCodes = [
+            '201','202','203','204','205','206','207','208','209','210','212','213','214','215','216','217','218','219','220',
+            '223','224','225','226','228','229','231','234','236','239','240','248','249','251','252','253','254','256','260',
+            '262','267','269','270','272','274','276','281','289','301','302','303','304','305','306','307','308','309','310',
+            '312','313','314','315','316','317','318','319','320','321','323','325','327','330','331','332','334','336','337',
+            '339','343','346','347','351','352','360','361','364','365','380','385','386','401','402','403','404','405','406',
+            '407','408','409','410','412','413','414','415','416','417','418','419','423','424','425','430','431','432','434',
+            '435','437','438','440','442','443','447','450','458','463','469','470','475','478','479','480','484','501','502',
+            '503','504','505','506','507','508','509','510','512','513','514','515','516','517','518','519','520','530','531',
+            '534','539','540','541','548','551','559','561','562','563','564','567','570','571','573','574','575','579','580',
+            '581','585','586','587','601','602','603','604','605','606','607','608','609','610','612','613','614','615','616',
+            '617','618','619','620','623','626','628','629','630','631','636','639','641','646','647','650','651','657','660',
+            '661','662','667','669','678','681','682','689','701','702','703','704','705','706','707','708','709','712','713',
+            '714','715','716','717','718','719','720','724','727','731','732','734','737','740','747','754','757','760','762',
+            '763','765','769','770','772','773','774','775','778','779','780','781','782','785','786','787','799','801','802',
+            '803','804','805','806','807','808','809','810','812','813','814','815','816','817','818','819','828','830','831',
+            '832','835','838','843','845','847','848','850','854','856','857','858','859','860','862','863','864','865','867',
+            '870','872','873','876','878','901','902','903','904','905','906','907','908','909','910','912','913','914','915',
+            '916','917','918','919','920','925','928','929','931','934','936','937','938','940','941','947','949','951','952',
+            '954','956','959','970','971','972','973','975','978','979','980','984','985','989'
+        ];
+
+        // LIVE INPUT ENGINE: Intercepts and corrects errors as they type
+        phoneInput.addEventListener('input', function(e) {
+            let value = this.value;
             
-            // Catch condition: User typed exactly 10 digits starting with a known Canadian/US area code (like 613, 416, 212)
-            // If they did this, they clearly forgot the "1" country code at the front.
-            if (digits.length === 10 && (digits.startsWith('613') || digits.startsWith('416') || digits.startsWith('905') || digits.startsWith('212') || digits.startsWith('312') || digits.startsWith('778') || digits.startsWith('514'))) {
-                return {
-                    isValid: false,
-                    message: "⚠️ Did you forget the country code? For Canada/US, please add a '1' at the start (e.g., 1613...)."
-                };
+            // Remove any characters that aren't numbers or a plus sign
+            let clean = value.replace(/[^\d+]/g, '');
+            
+            // If they manually added a +, remove it since our container visually prefixes it
+            if (clean.startsWith('+')) {
+                clean = clean.substring(1);
             }
+            
+            // Extract raw base digits
+            let digitsOnly = clean.replace(/\D/g, '');
 
-            if (digits.length < 8) {
-                return {
-                    isValid: false,
-                    message: "❌ Phone number is too short. Include country code + area code."
-                };
-            }
-
-            if (digits.length > 15) {
-                return {
-                    isValid: false,
-                    message: "❌ Phone number is too long."
-                };
-            }
-
-            return { isValid: true, cleanDigits: digits };
-        }
-
-        // Live input event listener to instantly clean up errors when they fix their mistake
-        phoneInput.addEventListener('input', function() {
-            if (phoneError.style.display === 'block') {
-                const check = validatePhoneNumber(this.value);
-                if (check.isValid) {
-                    phoneError.style.display = 'none';
-                    phoneHint.style.display = 'block';
+            // AUTO-CORRECTION TRIGGER: 
+            // If they enter exactly 10 digits and the first 3 match a North American Area code,
+            // they forgot the country code. Inject '1' automatically inside the field right now.
+            if (digitsOnly.length === 10) {
+                let firstThree = digitsOnly.substring(0, 3);
+                if (northAmericanAreaCodes.includes(firstThree)) {
+                    digitsOnly = '1' + digitsOnly;
+                    phoneHint.innerHTML = '✨ <span style="color:var(--success);">Auto-added country code "1" for Canada/US</span>';
                 }
+            }
+
+            // Update the input value field visually for the user
+            this.value = digitsOnly;
+
+            // Live field validation response
+            if (digitsOnly.length >= 8 && digitsOnly.length <= 15) {
+                phoneError.style.display = 'none';
+                phoneHint.style.display = 'block';
+                if (!phoneHint.innerHTML.includes('Auto-added')) {
+                    phoneHint.textContent = 'Format looks correct.';
+                }
+            } else if (digitsOnly.length > 0) {
+                phoneError.textContent = '❌ Input must contain a country code + number (8-15 digits total).';
+                phoneError.style.display = 'block';
+                phoneHint.style.display = 'none';
             }
         });
 
@@ -481,19 +505,19 @@
         form.addEventListener('submit', (e) => {
             e.preventDefault();
 
-            const validation = validatePhoneNumber(phoneInput.value);
+            let finalDigits = phoneInput.value.replace(/\D/g, '');
 
-            if (!validation.isValid) {
+            // Hard barrier block: reject submission completely if the raw numeric payload fails parameters
+            if (finalDigits.length < 8 || finalDigits.length > 15) {
                 phoneHint.style.display = 'none';
-                phoneError.textContent = validation.message;
+                phoneError.textContent = '❌ Cannot submit. Please provide a valid phone number with country code.';
                 phoneError.style.display = 'block';
                 phoneInput.focus();
-                return false; // HARD CEILING: Prevents submission and keeps form state active
+                return false; 
             }
 
-            // Construct the final payload safely
-            // We append the '+' to the thoroughly validated digits sequence
-            const dynamicCleanInternationalFormat = '+' + validation.cleanDigits;
+            // Standardize output payload string matching expected international configurations
+            const dynamicCleanInternationalFormat = '+' + finalDigits;
 
             const formData = new FormData();
             formData.append('customer_name', document.getElementById('customer_name').value);
@@ -521,6 +545,7 @@
             successCard.style.display = 'none';
             portalCard.style.display = 'block';
             phoneError.style.display = 'none';
+            phoneHint.textContent = 'Enter country code + phone number.';
             phoneHint.style.display = 'block';
             
             const formElements = form.querySelectorAll('input, textarea, button');
