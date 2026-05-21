@@ -7,6 +7,8 @@
     <title>Emergency Plumbing Portal</title>
     <link rel="icon" type="image/x-icon" href="gemini-favi.ico">
     <link rel="shortcut icon" type="image/x-icon" href="gemini-favi.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/css/intl-tel-input.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/intl-tel-input.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
 
@@ -329,28 +331,23 @@
 
             <form id="incident-form">
                 <div class="form-group">
-                <label for="customer_name">Your Name</label>
-                <div class="input-wrapper">
-                    <div class="input-icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                    </div>
-                    <input type="text" id="customer_name" name="customer_name" placeholder="e.g. John Doe" required>
-                </div>
-            </div>
-
-                <div class="form-group">
-                    <label for="phone">Phone Number</label>
+                    <label for="customer_name">Your Name</label>
                     <div class="input-wrapper">
                         <div class="input-icon">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
                             </svg>
                         </div>
-                        <input type="tel" id="phone" name="phone" placeholder="e.g. +385919293138" required>
+                        <input type="text" id="customer_name" name="customer_name" placeholder="e.g. John Doe" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number (Include Country Code)</label>
+                    <input type="tel" id="phone" name="phone" required style="width: 100%;">
+                    <div id="phone-error" style="color: #ff4444; font-size: 12px; margin-top: 5px; display: none; font-weight: 500;">
+                        ❌ Please enter a valid phone number with country code.
                     </div>
                 </div>
 
@@ -372,12 +369,12 @@
                     <textarea id="description" name="description" placeholder="Describe the leak, block or damage..." required></textarea>
                     
                     <div class="pill-wrapper" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
-                    <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Burst pipe under sink gushing hot water and kitchen flooded">💦 Burst Pipe</button>
-                    <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Main sewage line backing up into the basement floor drain">💩 Sewer Backup</button>
-                    <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Water heater tank leaking from base and running cold">🔥 Water Heater Leak</button>
-                    <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Main toilet clogged up and overflowing onto bathroom floor">🚽 Clogged Toilet</button>
-                    <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Kitchen faucet leaking from handles with a steady slow drip">💧 Slow Faucet Drip</button>
-                </div>
+                        <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Burst pipe under sink gushing hot water and kitchen flooded">💦 Burst Pipe</button>
+                        <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Main sewage line backing up into the basement floor drain">💩 Sewer Backup</button>
+                        <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Water heater tank leaking from base and running cold">🔥 Water Heater Leak</button>
+                        <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Main toilet clogged up and overflowing onto bathroom floor">🚽 Clogged Toilet</button>
+                        <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Kitchen faucet leaking from handles with a steady slow drip">💧 Slow Faucet Drip</button>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -421,14 +418,33 @@
         </div>
     </div>
 
+    <style>
+        .iti { width: 100%; margin-bottom: 5px; }
+        .iti__country-list { color: #000000; text-align: left; }
+    </style>
+
     <script>
         const form = document.getElementById('incident-form');
         const fileInput = document.getElementById('image');
         const filePreview = document.getElementById('file-preview');
+        const phoneInput = document.getElementById('phone');
+        const phoneError = document.getElementById('phone-error');
         
         const portalCard = document.getElementById('portal-card');
         const successCard = document.getElementById('success-card');
         const resetPortalBtn = document.getElementById('reset-portal-btn');
+
+        // ADDED: Initialize international telephone input library configuration
+        const iti = window.intlTelInput(phoneInput, {
+            initialCountry: "auto",
+            geoIpLookup: function(success, failure) {
+                fetch("https://ipapi.co/json/")
+                    .then(res => res.json())
+                    .then(data => success(data.country_code))
+                    .catch(() => success("US"));
+            },
+            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js"
+        });
 
         function getPlumberId() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -492,16 +508,26 @@
         form.addEventListener('submit', (e) => {
             e.preventDefault();
 
+            // CHANGED: Validate country prefix code structure with the library validation utility
+            phoneError.style.display = 'none';
+            if (!iti.isValidNumber()) {
+                phoneError.style.display = 'block';
+                phoneInput.focus();
+                return; // Stop form execution right here
+            }
+
             const formData = new FormData(form);
+            
+            // CHANGED: Override the raw input field value inside payload with the fully qualified E.164 number (e.g., +385919293138)
+            formData.set('phone', iti.getNumber());
+
             if (plumberId) {
                 formData.append('plumber_id', plumberId);
             }
 
-            // CHANGED: Instantly flip the visual screens without waiting for backend networks
             portalCard.style.display = 'none';
             successCard.style.display = 'block';
 
-            // Fire the request in the background decoupled from interface states
             submitWithRetry(formData);
 
             form.reset();
