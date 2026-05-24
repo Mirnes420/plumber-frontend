@@ -410,6 +410,8 @@
                     </svg>
                 </div>
                 <h1>Emergency Plumber</h1>
+                <button id="voice-btn">Click to Talk</button>
+    <div id="status">Status: Ready to launch voice monitor.</div>
                 <p class="subtitle">Submit details. We will instantly process the issue and page our emergency plumber on WhatsApp.</p>
             </div>
 
@@ -843,6 +845,81 @@
             const formElements = form.querySelectorAll('input, textarea, button');
             formElements.forEach(el => el.disabled = false);
         });
+    </script>
+    <script>
+        const voiceBtn = document.getElementById('voice-btn');
+        const statusDiv = document.getElementById('status');
+
+        // Check for Webkit/Native Browser Speech Recognition Support
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (!SpeechRecognition) {
+            statusDiv.innerText = "Error: Your browser does not support local SpeechRecognition API.";
+            voiceBtn.disabled = true;
+        } else {
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            voiceBtn.addEventListener('click', () => {
+                recognition.start();
+                voiceBtn.disabled = true;
+                statusDiv.innerText = "Status: Listening to your mic input...";
+            });
+
+            recognition.onresult = async (event) => {
+                const userTranscript = event.results[0][0].transcript;
+                statusDiv.innerText = `You Said: "${userTranscript}"`;
+
+                // --- PIPELINE STEP 1: Process Text via App Logic ---
+                // Here is where you normally execute your text fetch() to ask your plumbing core 
+                // We'll mimic an instant response targeting our specific plumbing lead rule
+                const fakeAiAnswer = "Do not frame your app pitch as a product. Tell the plumber how many high ticket water lines they bleed every single time they are stuck snaking a toilet.";
+
+                // --- PIPELINE STEP 2: Stream TTS from Server ---
+                statusDiv.innerText = "Status: Streaming synthesized response...";
+                await streamAndPlayAudio(fakeAiAnswer);
+            };
+
+            recognition.onspeechend = () => {
+                recognition.stop();
+            };
+
+            recognition.onerror = (event) => {
+                console.error("STT Capture Error: ", event.error);
+                statusDiv.innerText = `Error catching speech: ${event.error}`;
+                voiceBtn.disabled = false;
+            };
+        }
+
+        async function streamAndPlayAudio(textToSpeak) {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Call the streaming server endpoint directly with URL encoding
+                const response = await fetch(`/api/tts?text=${encodeURIComponent(textToSpeak)}`);
+                if (!response.ok) throw new Error("Server rejected request");
+
+                const arrayBuffer = await response.arrayBuffer();
+                const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+                
+                const source = audioCtx.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(audioCtx.destination);
+                
+                source.start(0);
+                source.onended = () => {
+                    statusDiv.innerText = "Status: Session ready for next question.";
+                    voiceBtn.disabled = false;
+                };
+
+            } catch (err) {
+                console.error("Audio Playback Error:", err);
+                statusDiv.innerText = "Status: Failed playing response audio.";
+                voiceBtn.disabled = false;
+            }
+        }
     </script>
 </body>
 

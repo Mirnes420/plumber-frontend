@@ -6,8 +6,13 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import pg from 'pg';
+import { EdgeTTS } from '@andresaya/edge-tts';
+
+
 
 const { Pool } = pg;
+
+const PORT = process.env.PORT || 3001;
 
 // Load shared environment variables
 dotenv.config({ path: '../.env' });
@@ -235,6 +240,51 @@ async function startSock() {
 
 startSock();
 
+
+app.get('/api/tts', async (req, res) => {
+    const text = req.query.text;
+    if (!text) {
+        return res.status(400).json({ error: 'Text query parameter is required' });
+    }
+
+    // Set streaming headers to deliver immediate audio chunks to client browser
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Transfer-Encoding', 'chunked');
+
+    try {
+        const tts = new EdgeTTS();
+        
+        // Generate the stream using a highly distinct, professional voice
+        const ttsStream = await tts.stream(text, {
+            voice: 'en-US-ChristopherNeural',
+            rate: '0%',     // Default speed
+            pitch: '0Hz'    // Default pitch
+        });
+
+        // Pipe incoming data chunks straight out through our express response
+        ttsStream.on('data', (chunk) => {
+            res.write(chunk);
+        });
+
+        ttsStream.on('end', () => {
+            res.end();
+        });
+
+        ttsStream.on('error', (streamErr) => {
+            console.error('EdgeTTS stream transmission error:', streamErr);
+            if (!res.headersSent) res.status(500).send('Stream failed mid-flight');
+            res.end();
+        });
+
+    } catch (error) {
+        console.error('TTS Initialization Failure:', error);
+        if (!res.headersSent) res.status(500).send('Internal TTS Error');
+    }
+});
+
+app.listen(PORT, () => {
+    console.log(`Server handling low-latency production loop on port ${PORT}`);
+});
 // Route to serve index.html for specific plumber IDs (e.g. /id=1)
 app.get('/id=:plumber_id', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -480,7 +530,6 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
 });
 
 
-const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
     console.log(`wbot API server running on port ${PORT}`);
 });
