@@ -238,8 +238,24 @@ async function startSock() {
     });
 }
 
-startSock();
+async function streamAndPlayEdgeAudio(text) {
+    try {
+        const response = await fetch(`/api/tts?text=${encodeURIComponent(text)}`);
+        if (!response.ok) throw new Error(`Server responded with ${response.status}`);
+        
+        // Audio playback logic here...
+    } catch (error) {
+        console.error("Audio Pipeline Error:", error);
+        // CRITICAL: Fallback immediately to UI text presentation if audio fails
+        displayUiFallbackMessage(text);
+    } finally {
+        // Ensure the system unblocks and moves to the next logical step
+        proceedToNextWorkflowStep();
+    }
+}
 
+
+startSock();
 
 app.get('/api/tts', async (req, res) => {
     const text = req.query.text;
