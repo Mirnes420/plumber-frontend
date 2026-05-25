@@ -55,10 +55,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 1rem;
+            padding: 1.5rem;
             letter-spacing: -0.01em;
-            position: relative;
-            overflow-x: hidden;
         }
 
         .container {
@@ -70,15 +68,9 @@
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 20px;
-            padding: 2rem 1.5rem;
+            padding: 2.5rem;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
             animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        @media (min-width: 480px) {
-            .minimal-card {
-                padding: 2.5rem;
-            }
         }
 
         @keyframes fadeIn {
@@ -94,7 +86,7 @@
 
         .header {
             text-align: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         .header-icon {
@@ -121,194 +113,6 @@
             color: var(--text-secondary);
             font-size: 0.9rem;
             line-height: 1.5;
-            margin-bottom: 1rem;
-        }
-
-        /* Voice CTA Control Modifications */
-        .voice-control-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 1.5rem;
-            background: #18181b;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 12px;
-        }
-
-        #voice-btn {
-            background: #ffffff;
-            color: #000000;
-            font-size: 0.9rem;
-            font-weight: 600;
-            padding: 10px 20px;
-            border-radius: 8px;
-            width: auto;
-            min-width: 160px;
-        }
-
-        #voice-btn:hover {
-            background: var(--accent-hover);
-        }
-
-        #voice-btn.listening-state {
-            background: var(--error);
-            color: #ffffff;
-            animation: pulse-red 1.5s infinite;
-        }
-
-        @keyframes pulse-red {
-            0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); }
-            70% { box-shadow: 0 0 0 8px rgba(244, 63, 94, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
-        }
-
-        #status {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        /* Live Chat Bubble Interface System */
-        .chat-bubble-overlay {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            z-index: 1000;
-            display: none;
-            max-width: 320px;
-            animation: slideUpBubble 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        @keyframes slideUpBubble {
-            from { opacity: 0; transform: translateY(20px) scale(0.95); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        .chat-bubble-card {
-            background: #18181b;
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .chat-bubble-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-secondary);
-        }
-
-        .bubble-indicator-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--success);
-        }
-
-        .bubble-indicator-dot.speaking {
-            background: #0070f3;
-            animation: pulse-blue 1s infinite;
-        }
-
-        @keyframes pulse-blue {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.3); opacity: 0.5; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .chat-bubble-text {
-            font-size: 0.9rem;
-            line-height: 1.4;
-            color: var(--text-primary);
-            max-height: 120px;
-            overflow-y: auto;
-        }
-
-        /* Steps Indicator */
-        .steps-indicator {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            position: relative;
-            padding: 0 10px;
-        }
-
-        .steps-line {
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--border-color);
-            transform: translateY(-50%);
-            z-index: 1;
-        }
-
-        .steps-line-progress {
-            position: absolute;
-            top: 50%;
-            left: 0;
-            height: 2px;
-            background: var(--text-primary);
-            transform: translateY(-50%);
-            z-index: 2;
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        .step-dot {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: #18181b;
-            border: 2px solid var(--border-color);
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: 600;
-            position: relative;
-            z-index: 3;
-            transition: all 0.3s ease;
-        }
-
-        .step-dot.active {
-            border-color: var(--accent-white);
-            background: var(--accent-white);
-            color: #000000;
-        }
-
-        .step-dot.completed {
-            border-color: var(--success);
-            background: var(--success);
-            color: #000000;
-        }
-
-        /* Form Steps Switching */
-        .form-step {
-            display: none;
-        }
-
-        .form-step.active {
-            display: block;
-            animation: slideIn 0.3s ease forwards;
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(10px); }
-            to { opacity: 1; transform: translateX(0); }
         }
 
         .form-group {
@@ -368,11 +172,11 @@
             box-shadow: 0 0 0 1px var(--accent-white);
         }
 
-        /* File Upload Area */
+        /* File Upload */
         .file-upload-wrapper {
             position: relative;
             width: 100%;
-            height: 100px;
+            height: 90px;
             border: 1px dashed var(--border-color);
             border-radius: 10px;
             display: flex;
@@ -402,9 +206,8 @@
             text-align: center;
             pointer-events: none;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
         }
 
         .file-upload-text span {
@@ -412,64 +215,13 @@
             font-weight: 500;
         }
 
-        .preview-container {
-            display: none;
-            margin-top: 1rem;
-            background: #18181b;
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 0.75rem;
-            position: relative;
-        }
-
-        .preview-image-element {
-            width: 100%;
-            max-height: 200px;
-            object-fit: cover;
-            border-radius: 6px;
-            display: block;
-            background: #000;
-        }
-
-        .preview-details {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 0.5rem;
-        }
-
-        #file-preview-filename {
+        #file-preview {
+            margin-top: 8px;
             font-size: 0.8rem;
             color: var(--success);
+            display: none;
+            text-align: center;
             font-weight: 500;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 75%;
-        }
-
-        .remove-file-btn {
-            background: transparent;
-            border: none;
-            color: var(--error);
-            font-size: 0.8rem;
-            font-weight: 600;
-            cursor: pointer;
-            padding: 2px 6px;
-            width: auto;
-            margin-top: 0;
-            display: inline-flex;
-        }
-        .remove-file-btn:hover {
-            background: rgba(244, 63, 94, 0.1);
-            border-radius: 4px;
-        }
-
-        /* Controls Footers */
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 1.5rem;
         }
 
         button {
@@ -483,6 +235,7 @@
             font-weight: 600;
             cursor: pointer;
             transition: background 0.2s ease, transform 0.1s ease;
+            margin-top: 0.5rem;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -495,15 +248,6 @@
 
         button:active {
             transform: scale(0.99);
-        }
-
-        button.btn-secondary {
-            background: #18181b;
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-        }
-        button.btn-secondary:hover {
-            background: #27272a;
         }
     </style>
 </head>
@@ -523,127 +267,90 @@
                 </div>
                 <h1>Emergency Plumber</h1>
                 <p class="subtitle">Submit details. We will instantly process the issue and page our emergency plumber on WhatsApp.</p>
-                
-                <div class="voice-control-wrapper">
-                    <button type="button" id="voice-btn">Click to Talk</button>
-                    <div id="status">Status: Voice portal active.</div>
-                </div>
-            </div>
-
-            <div class="steps-indicator">
-                <div class="steps-line"></div>
-                <div class="steps-line-progress" id="wizard-progress-bar"></div>
-                <div class="step-dot active" id="dot-1">1</div>
-                <div class="step-dot" id="dot-2">2</div>
-                <div class="step-dot" id="dot-3">3</div>
             </div>
 
             <form id="incident-form">
-                <div class="form-step active" id="step-1">
-                    <div class="form-group">
-                        <label for="customer_name">Your Name</label>
-                        <div class="input-wrapper">
-                            <div class="input-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                    <circle cx="12" cy="7" r="4"></circle>
-                                </svg>
-                            </div>
-                            <input type="text" id="customer_name" name="customer_name" placeholder="e.g. John Doe" required>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="phone">Phone Number</label>
-                        <div class="input-wrapper">
-                            <div class="input-icon" style="color: var(--text-secondary); font-weight: 600; font-size: 16px; left: 1.1rem;">
-                                +
-                            </div>
-                            <input type="tel" id="phone" name="phone" placeholder="1 613 555 0143" style="padding-left: 2.2rem;" required>
-                        </div>
-                        
-                        <div id="phone-hint" style="color: var(--text-secondary); font-size: 12px; margin-top: 6px; display: block; font-weight: 400; padding-left: 4px;">
-                            Enter country code + phone number.
-                        </div>
-                        <div id="phone-error" style="color: var(--error); font-size: 13px; margin-top: 6px; display: none; font-weight: 500;">
-                            ❌ Invalid Number format.
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="location">Emergency Address / Location</label>
-                        <div class="input-wrapper">
-                            <div class="input-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                    <circle cx="12" cy="10" r="3"></circle>
-                                </svg>
-                            </div>
-                            <input type="text" id="location" name="location" placeholder="Street name, apartment unit, city..." required>
-                        </div>
-                    </div>
-
-                    <div class="btn-group">
-                        <button type="button" class="next-step-btn">Continue to Step 2</button>
-                    </div>
-                </div>
-
-                <div class="form-step" id="step-2">
-                    <div class="form-group">
-                        <label for="description">Problem Description</label>
-                        <textarea id="description" name="description" placeholder="Describe the leak, block or damage..." required></textarea>
-                        
-                        <div class="pill-wrapper" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
-                            <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Burst pipe under sink gushing hot water and kitchen flooded">💦 Burst Pipe</button>
-                            <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Main sewage line backing up into the basement floor drain">💩 Sewer Backup</button>
-                            <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Water heater tank leaking from base and running cold">🔥 Water Heater Leak</button>
-                            <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Main toilet clogged up and overflowing onto bathroom floor">🚽 Clogged Toilet</button>
-                            <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Kitchen faucet leaking from handles with a steady slow drip">💧 Slow Faucet Drip</button>
-                        </div>
-                    </div>
-
-                    <div class="btn-group">
-                        <button type="button" class="prev-step-btn btn-secondary">Back</button>
-                        <button type="button" class="next-step-btn">Continue to Step 3</button>
-                    </div>
-                </div>
-
-                <div class="form-step" id="step-3">
-                    <div class="form-group">
-                        <label>Attach Photo (Optional)</label>
-                        <div class="file-upload-wrapper">
-                            <input type="file" id="image" name="image" accept="image/*" capture="environment">
-                            <div class="file-upload-text">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                                    <circle cx="12" cy="13" r="4"></circle>
-                                </svg>
-                                <span>Take Photo or Upload Image File</span>
-                            </div>
-                        </div>
-                        
-                        <div class="preview-container" id="preview-frame">
-                            <img src="" alt="Incident Visual Preview" class="preview-image-element" id="visual-thumbnail">
-                            <div class="preview-details">
-                                <span id="file-preview-filename">File selected</span>
-                                <button type="button" class="remove-file-btn" id="clear-file-btn">Remove</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="btn-group">
-                        <button type="button" class="prev-step-btn btn-secondary">Back</button>
-                        <button type="submit" id="submit-btn">
-                            <span>Send Request</span>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="22" y1="2" x2="11" y2="13"></line>
-                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                <div class="form-group">
+                    <label for="customer_name">Your Name</label>
+                    <div class="input-wrapper">
+                        <div class="input-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
                             </svg>
-                        </button>
+                        </div>
+                        <input type="text" id="customer_name" name="customer_name" placeholder="e.g. John Doe" required>
                     </div>
                 </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <div class="input-wrapper">
+                        <div class="input-icon" style="color: var(--text-secondary); font-weight: 600; font-size: 16px; left: 1.1rem;">
+                            +
+                        </div>
+                        <input type="tel" id="phone" name="phone" placeholder="1 613 555 0143" style="padding-left: 2.2rem;" required>
+                    </div>
+                    
+                    <div id="phone-hint" style="color: var(--text-secondary); font-size: 12px; margin-top: 6px; display: block; font-weight: 400; padding-left: 4px;">
+                        Enter country code + phone number.
+                    </div>
+                    <div id="phone-error" style="color: var(--error); font-size: 13px; margin-top: 6px; display: none; font-weight: 500;">
+                        ❌ Invalid Number format.
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="location">Emergency Address / Location</label>
+                    <div class="input-wrapper">
+                        <div class="input-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                        </div>
+                        <input type="text" id="location" name="location" placeholder="Street name, apartment unit, city..." required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Problem Description</label>
+                    <textarea id="description" name="description" placeholder="Describe the leak, block or damage..." required></textarea>
+                    
+                    <div class="pill-wrapper" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
+                        <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Burst pipe under sink gushing hot water and kitchen flooded">💦 Burst Pipe</button>
+                        <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Main sewage line backing up into the basement floor drain">💩 Sewer Backup</button>
+                        <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Water heater tank leaking from base and running cold">🔥 Water Heater Leak</button>
+                        <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Main toilet clogged up and overflowing onto bathroom floor">🚽 Clogged Toilet</button>
+                        <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Kitchen faucet leaking from handles with a steady slow drip">💧 Slow Faucet Drip</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Attach Photo (Optional)</label>
+                    <div class="file-upload-wrapper">
+                        <input type="file" id="image" name="image" accept="image/*">
+                        <div class="file-upload-text">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                            <span>Upload Image File</span>
+                        </div>
+                    </div>
+                    <div id="file-preview" style="display: none;">File selected</div>
+                </div>
+
+                <button type="submit" id="submit-btn">
+                    <span>Send Request</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
             </form>
         </div>
 
@@ -660,26 +367,10 @@
         </div>
     </div>
 
-    <div class="chat-bubble-overlay" id="voice-chat-bubble">
-        <div class="chat-bubble-card">
-            <div class="chat-bubble-header">
-                <div class="bubble-indicator-dot" id="bubble-dot"></div>
-                <span id="bubble-title">System Status</span>
-            </div>
-            <div class="chat-bubble-text" id="bubble-transcription">
-                Listening for audio sequence input...
-            </div>
-        </div>
-    </div>
-
     <script>
         const form = document.getElementById('incident-form');
         const fileInput = document.getElementById('image');
-        const previewFrame = document.getElementById('preview-frame');
-        const visualThumbnail = document.getElementById('visual-thumbnail');
-        const previewFilename = document.getElementById('file-preview-filename');
-        const clearFileBtn = document.getElementById('clear-file-btn');
-        
+        const filePreview = document.getElementById('file-preview');
         const phoneInput = document.getElementById('phone');
         const phoneError = document.getElementById('phone-error');
         const phoneHint = document.getElementById('phone-hint');
@@ -687,22 +378,6 @@
         const portalCard = document.getElementById('portal-card');
         const successCard = document.getElementById('success-card');
         const resetPortalBtn = document.getElementById('reset-portal-btn');
-
-        // Wizard steps tracking configurations
-        let currentStep = 1;
-        const totalSteps = 3;
-        const steps = document.querySelectorAll('.form-step');
-        const nextButtons = document.querySelectorAll('.next-step-btn');
-        const prevButtons = document.querySelectorAll('.prev-step-btn');
-        const progressBar = document.getElementById('wizard-progress-bar');
-
-        // Voice Engine Global Access Objects Mapping
-        const voiceBtn = document.getElementById('voice-btn');
-        const statusDiv = document.getElementById('status');
-        const bubbleOverlay = document.getElementById('voice-chat-bubble');
-        const bubbleDot = document.getElementById('bubble-dot');
-        const bubbleTitle = document.getElementById('bubble-title');
-        const bubbleText = document.getElementById('bubble-transcription');
 
         function getPlumberId() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -719,97 +394,6 @@
 
         const plumberId = getPlumberId();
 
-        // Wizard UI Progress Render Mapping Update Logic
-        function updateWizardUI() {
-            steps.forEach((step, index) => {
-                if (index === (currentStep - 1)) {
-                    step.classList.add('active');
-                } else {
-                    step.classList.remove('active');
-                }
-            });
-
-            // Update Header Dot States
-            for (let i = 1; i <= totalSteps; i++) {
-                const dot = document.getElementById(`dot-${i}`);
-                if (i < currentStep) {
-                    dot.className = 'step-dot completed';
-                    dot.textContent = '✓';
-                } else if (i === currentStep) {
-                    dot.className = 'step-dot active';
-                    dot.textContent = i;
-                } else {
-                    dot.className = 'step-dot';
-                    dot.textContent = i;
-                }
-            }
-
-            // Move the background linear line progress width bar matching metrics
-            const progressPercentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
-            progressBar.style.width = `${progressPercentage}%`;
-            
-            window.scrollTo({ top: portalCard.offsetTop, behavior: 'smooth' });
-        }
-
-        // Field Validation Engine for Step Switching
-        function validateStepFields(stepIndex) {
-            if (stepIndex === 1) {
-                const nameInp = document.getElementById('customer_name');
-                const locInp = document.getElementById('location');
-                let finalDigits = phoneInput.value.replace(/\D/g, '');
-
-                if (!nameInp.checkValidity()) {
-                    nameInp.reportValidity();
-                    return false;
-                }
-                
-                if (finalDigits.length < 8 || finalDigits.length > 15) {
-                    phoneHint.style.display = 'none';
-                    phoneError.textContent = '❌ Input must contain a country code + number (8-15 digits total).';
-                    phoneError.style.display = 'block';
-                    phoneInput.focus();
-                    return false;
-                }
-
-                if (!locInp.checkValidity()) {
-                    locInp.reportValidity();
-                    return false;
-                }
-                return true;
-            }
-
-            if (stepIndex === 2) {
-                const descInp = document.getElementById('description');
-                if (!descInp.checkValidity()) {
-                    descInp.reportValidity();
-                    return false;
-                }
-                return true;
-            }
-            return true;
-        }
-
-        // Dynamic click triggers navigation adjustments
-        nextButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (validateStepFields(currentStep)) {
-                    if (currentStep < totalSteps) {
-                        currentStep++;
-                        updateWizardUI();
-                    }
-                }
-            });
-        });
-
-        prevButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (currentStep > 1) {
-                    currentStep--;
-                    updateWizardUI();
-                }
-            });
-        });
-
         document.querySelectorAll('.suggest-pill').forEach(pill => {
             pill.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -818,34 +402,16 @@
             });
         });
 
-        // Advanced File/Camera Processing & Real Time Image Data Engine Mapping
         fileInput.addEventListener('change', function () {
             if (this.files && this.files[0]) {
-                const file = this.files[0];
-                previewFilename.textContent = `Selected: ${file.name}`;
-                
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    visualThumbnail.src = e.target.result;
-                    previewFrame.style.display = 'block';
-                }
-                reader.readAsDataURL(file);
+                filePreview.textContent = `Selected: ${this.files[0].name}`;
+                filePreview.style.display = 'block';
             } else {
-                clearMediaDataTrack();
+                filePreview.style.display = 'none';
             }
         });
 
-        function clearMediaDataTrack() {
-            fileInput.value = '';
-            visualThumbnail.src = '';
-            previewFrame.style.display = 'none';
-        }
-
-        clearFileBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            clearMediaDataTrack();
-        });
-
+        // List of all North American (NANP) Area Codes to catch missing '1' country code
         const northAmericanAreaCodes = [
             '201','202','203','204','205','206','207','208','209','210','212','213','214','215','216','217','218','219','220',
             '223','224','225','226','228','229','231','234','236','239','240','248','249','251','252','253','254','256','260',
@@ -868,16 +434,26 @@
             '954','956','959','970','971','972','973','975','978','979','980','984','985','989'
         ];
 
+        // LIVE INPUT ENGINE: Intercepts and corrects errors as they type
+       // LIVE INPUT ENGINE: Intercepts and corrects errors based on international context
         phoneInput.addEventListener('input', function(e) {
             let value = this.value;
+            
+            // Remove any characters that aren't numbers or a plus sign
             let clean = value.replace(/[^\d+]/g, '');
             
+            // If they manually added a +, remove it since our container visually prefixes it
             if (clean.startsWith('+')) {
                 clean = clean.substring(1);
             }
             
+            // Extract raw base digits
             let digitsOnly = clean.replace(/\D/g, '');
-            const structuralInternationalPrefixes = ['33', '34', '39', '44', '49', '385', '387'];
+
+            // AUTO-CORRECTION MATRIX: 
+            // Only flag North American formatting if the input DOES NOT start with common European/Global prefixes
+            const structuralInternationalPrefixes = ['33', '34', '39', '44', '49', '385', '387']; // France, Spain, Italy, UK, Germany, Croatia, Bosnia...
+            
             let isExplicitlyInternational = structuralInternationalPrefixes.some(prefix => digitsOnly.startsWith(prefix));
 
             if (digitsOnly.length === 10 && !isExplicitlyInternational) {
@@ -888,8 +464,10 @@
                 }
             }
 
+            // Update the input value field visually for the user
             this.value = digitsOnly;
 
+            // Live field validation response
             if (digitsOnly.length >= 8 && digitsOnly.length <= 15) {
                 phoneError.style.display = 'none';
                 phoneHint.style.display = 'block';
@@ -902,135 +480,6 @@
                 phoneHint.style.display = 'none';
             }
         });
-
-        // --- Low Latency Native Client Voice Engine Realization ---
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        let recognitionEngine = null;
-
-        if (SpeechRecognition) {
-            recognitionEngine = new SpeechRecognition();
-            recognitionEngine.continuous = false;
-            recognitionEngine.interimResults = false;
-            recognitionEngine.lang = 'en-US';
-
-            voiceBtn.addEventListener('click', () => {
-                try {
-                    recognitionEngine.start();
-                } catch(e) {
-                    console.log("Engine already cycling inputs.");
-                }
-            });
-
-            recognitionEngine.onstart = () => {
-                voiceBtn.disabled = true;
-                voiceBtn.classList.add('listening-state');
-                voiceBtn.innerText = "Listening...";
-                statusDiv.innerText = "Status: Microphones hot.";
-                
-                // Show chat overlay panel setup
-                bubbleOverlay.style.display = 'block';
-                bubbleDot.className = 'bubble-indicator-dot';
-                bubbleTitle.innerText = "User Speaking";
-                bubbleText.innerText = "Listening to your room speech...";
-            };
-
-            recognitionEngine.onresult = async (event) => {
-                const transcript = event.results[0][0].transcript;
-                bubbleText.innerText = `You Said: "${transcript}"`;
-                statusDiv.innerText = "Status: Computing AI framework response...";
-
-                // Route text input straight to processing container variables
-                document.getElementById('description').value = transcript;
-
-                // Move Wizard workflow dynamically to step 2 automatically if on step 1
-                if (currentStep === 1) {
-                    currentStep = 2;
-                    updateWizardUI();
-                }
-
-                // Call your mock text-generation mapping or hit endpoint here
-                const mockResponse = "Understood. Problem parsed into workflow logic. Streaming response audio layer now.";
-                
-                await streamAndPlayEdgeAudio(mockResponse);
-            };
-
-            recognitionEngine.onspeechend = () => {
-                recognitionEngine.stop();
-            };
-
-            recognitionEngine.onerror = (event) => {
-                console.error("STT Process Error: ", event.error);
-                
-                if (event.error === 'network') {
-                    // Execute silent backup engine execution path locally
-                    statusDiv.innerText = "Status: Cloud tracking restricted. Launching native fallback.";
-                    bubbleTitle.innerText = "System Notification";
-                    bubbleText.innerText = "Chrome cloud network blocked. Activating local device microphone bypass loop.";
-                    
-                    setTimeout(() => {
-                        executeNativeFallbackBypass();
-                    }, 1200);
-                } else {
-                    statusDiv.innerText = `Error catching speech: ${event.error}`;
-                    resetVoiceUIControls();
-                }
-            };
-        } else {
-            voiceBtn.disabled = true;
-            statusDiv.innerText = "Voice input unsupported by device hardware browser constraints.";
-        }
-
-        // Local Processing Bypass Mechanism Engine
-        function executeNativeFallbackBypass() {
-            const fallbackPrompt = "Local fall back initialized. Please manually type the issue into step two or select a quick option pill below.";
-            document.getElementById('description').placeholder = "Enter emergency parameters manually...";
-            if (currentStep === 1) {
-                currentStep = 2;
-                updateWizardUI();
-            }
-            streamAndPlayEdgeAudio(fallbackPrompt);
-        }
-
-        async function streamAndPlayEdgeAudio(textData) {
-            try {
-                // Update Overlay components state to tracking synthesis loop
-                bubbleDot.className = 'bubble-indicator-dot speaking';
-                bubbleTitle.innerText = "AI Assistant Voice";
-                bubbleText.innerText = textData;
-
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const response = await fetch(`/api/tts?text=${encodeURIComponent(textData)}`);
-                
-                if (!response.ok) throw new Error("Audio link transmission drop");
-
-                const bufferData = await response.arrayBuffer();
-                const cleanBuffer = await audioContext.decodeAudioData(bufferData);
-                
-                const soundNode = audioContext.createBufferSource();
-                soundNode.buffer = cleanBuffer;
-                soundNode.connect(audioContext.destination);
-                
-                soundNode.start(0);
-                soundNode.onended = () => {
-                    statusDiv.innerText = "Status: Sequence complete.";
-                    resetVoiceUIControls();
-                };
-
-            } catch (err) {
-                console.error("Audio Pipeline Error: ", err);
-                statusDiv.innerText = "Status: Streaming failed.";
-                resetVoiceUIControls();
-            }
-        }
-
-        function resetVoiceUIControls() {
-            voiceBtn.disabled = false;
-            voiceBtn.classList.remove('listening-state');
-            voiceBtn.innerText = "Click to Talk";
-            setTimeout(() => {
-                bubbleOverlay.style.display = 'none';
-            }, 5000); // Keep chat view layer up for 5 seconds for visual tracking verification
-        }
 
         async function submitWithRetry(formData, attempt = 1, maxAttempts = 10, delayMs = 8000) {
             try {
@@ -1046,50 +495,72 @@
                 if (!response.ok) {
                     throw new Error(result.error || `HTTP error ${response.status}`);
                 }
-                
-                // Show Success Card View States
-                portalCard.style.display = 'none';
-                successCard.style.display = 'block';
                 return result;
             } catch (error) {
-                console.error(`Submission error on attempt ${attempt}:`, error);
                 if (attempt < maxAttempts) {
-                    statusDiv.innerText = `Network drop. Re-routing package pipeline (Attempt ${attempt}/${maxAttempts})...`;
                     await new Promise(resolve => setTimeout(resolve, delayMs));
                     return submitWithRetry(formData, attempt + 1, maxAttempts, delayMs);
                 } else {
-                    alert(`Critical System Failure: Could not transmit incident payload files. Check your interface.`);
-                    throw error;
+                    console.error("Background delivery permanently failed:", error.message);
                 }
             }
         }
 
-        form.addEventListener('submit', async (e) => {
+        form.addEventListener('submit', (e) => {
             e.preventDefault();
-            const dataPayload = new FormData(form);
-            if(plumberId) {
-                dataPayload.append('plumber_id', plumberId);
+
+            let finalDigits = phoneInput.value.replace(/\D/g, '');
+
+            // Hard barrier block: reject submission completely if the raw numeric payload fails parameters
+            if (finalDigits.length < 8 || finalDigits.length > 15) {
+                phoneHint.style.display = 'none';
+                phoneError.textContent = '❌ Cannot submit. Please provide a valid phone number with country code.';
+                phoneError.style.display = 'block';
+                phoneInput.focus();
+                return false; 
             }
-            document.getElementById('submit-btn').disabled = true;
-            statusDiv.innerText = "Status: Bundling payload vectors for upstream packaging...";
+
+            // Standardize output payload string matching expected international configurations
+            const dynamicCleanInternationalFormat = '+' + finalDigits;
+
+            const formData = new FormData();
+            formData.append('customer_name', document.getElementById('customer_name').value);
+            formData.append('phone', dynamicCleanInternationalFormat); 
+            formData.append('location', document.getElementById('location').value);
+            formData.append('description', document.getElementById('description').value);
             
-            try {
-                await submitWithRetry(dataPayload);
-            } catch(err) {
-                document.getElementById('submit-btn').disabled = false;
+            // Check for demo=true URL parameter flag
+            const urlParams = new URLSearchParams(window.location.search);
+            const isDemo = urlParams.get('demo') === 'true';
+            formData.append('demo', isDemo ? 'true' : 'false');
+            
+            if (fileInput.files[0]) {
+                formData.append('image', fileInput.files[0]);
             }
+            if (plumberId) {
+                formData.append('plumber_id', plumberId);
+            }
+
+            portalCard.style.display = 'none';
+            successCard.style.display = 'block';
+
+            submitWithRetry(formData);
+
+            form.reset();
+            if (filePreview) filePreview.style.display = 'none';
         });
 
         resetPortalBtn.addEventListener('click', () => {
-            form.reset();
-            clearMediaDataTrack();
-            currentStep = 1;
-            updateWizardUI();
             successCard.style.display = 'none';
             portalCard.style.display = 'block';
-            document.getElementById('submit-btn').disabled = false;
-            statusDiv.innerText = "Status: Form reset completed.";
+            phoneError.style.display = 'none';
+            phoneHint.textContent = 'Enter country code + phone number.';
+            phoneHint.style.display = 'block';
+            
+            const formElements = form.querySelectorAll('input, textarea, button');
+            formElements.forEach(el => el.disabled = false);
         });
     </script>
 </body>
+
 </html>

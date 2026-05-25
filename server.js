@@ -6,13 +6,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import pg from 'pg';
-import { EdgeTTS } from '@andresaya/edge-tts';
-
-
 
 const { Pool } = pg;
-
-const PORT = process.env.PORT || 3001;
 
 // Load shared environment variables
 dotenv.config({ path: '../.env' });
@@ -238,69 +233,8 @@ async function startSock() {
     });
 }
 
-async function streamAndPlayEdgeAudio(text) {
-    try {
-        const response = await fetch(`/api/tts?text=${encodeURIComponent(text)}`);
-        if (!response.ok) throw new Error(`Server responded with ${response.status}`);
-        
-        // Audio playback logic here...
-    } catch (error) {
-        console.error("Audio Pipeline Error:", error);
-        // CRITICAL: Fallback immediately to UI text presentation if audio fails
-        displayUiFallbackMessage(text);
-    } finally {
-        // Ensure the system unblocks and moves to the next logical step
-        proceedToNextWorkflowStep();
-    }
-}
-
-
 startSock();
 
-app.get('/api/tts', async (req, res) => {
-    const text = req.query.text;
-    if (!text) {
-        return res.status(400).json({ error: 'Text query parameter is required' });
-    }
-
-    // Set streaming headers to deliver immediate audio chunks to client browser
-    res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Transfer-Encoding', 'chunked');
-
-    try {
-        const tts = new EdgeTTS();
-        
-        // Generate the stream using a highly distinct, professional voice
-        const ttsStream = await tts.stream(text, {
-            voice: 'en-US-ChristopherNeural',
-            rate: '0%',     // Default speed
-            pitch: '0Hz'    // Default pitch
-        });
-
-        // Pipe incoming data chunks straight out through our express response
-        ttsStream.on('data', (chunk) => {
-            res.write(chunk);
-        });
-
-        ttsStream.on('end', () => {
-            res.end();
-        });
-
-        ttsStream.on('error', (streamErr) => {
-            console.error('EdgeTTS stream transmission error:', streamErr);
-            if (!res.headersSent) res.status(500).send('Stream failed mid-flight');
-            res.end();
-        });
-
-    } catch (error) {
-        console.error('TTS Initialization Failure:', error);
-        if (!res.headersSent) res.status(500).send('Internal TTS Error');
-    }
-});
-
-app.listen(PORT, () => {
-    console.log(`Server handling low-latency production loop on port ${PORT}`);
-});
 // Route to serve index.html for specific plumber IDs (e.g. /id=1)
 app.get('/id=:plumber_id', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -423,7 +357,7 @@ app.get('/auth', (req, res) => {
 // API Endpoint to send messages
 app.post('/send', async (req, res) => {
     try {
-        const { number, text, imageUrl, caption, buttons } = req.body;
+        const { number, text, imageUrl, caption, buttons, demo } = req.body;
 
 
         if (!number) {
@@ -489,8 +423,8 @@ app.post('/send', async (req, res) => {
 // Endpoint to receive HTML form submissions and forward to Python Engine
 app.post('/submit-form', upload.single('image'), async (req, res) => {
     try {
-        const { phone, description, location, customer_name, plumber_id } = req.body;
-        console.log(`🌐 Received web form from ${customer_name || 'Unknown'} (${phone}) [Plumber ID: ${plumber_id || 'None'}]`);
+        const { phone, description, location, customer_name, plumber_id, demo } = req.body;
+        console.log(`🌐 Received web form from ${customer_name || 'Unknown'} (${phone}) [Plumber ID: ${plumber_id || 'None'} | Demo: ${demo}]`);
 
         const formData = new FormData();
         formData.append('phone', phone);
@@ -499,6 +433,7 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
         if (location) formData.append('location', location);
         if (customer_name) formData.append('customer_name', customer_name);
         if (plumber_id) formData.append('plumber_id', plumber_id);
+        if (demo) formData.append('demo', demo);
 
         if (req.file) {
             const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
@@ -546,6 +481,7 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
 });
 
 
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
     console.log(`wbot API server running on port ${PORT}`);
 });
