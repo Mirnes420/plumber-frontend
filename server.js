@@ -426,22 +426,63 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
         const { phone, description, location, customer_name, plumber_id, demo } = req.body;
         console.log(`🌐 Received web form from ${customer_name || 'Unknown'} (${phone}) [Plumber ID: ${plumber_id || 'None'} | Demo: ${demo}]`);
 
+        // Demo mode: bypass AI/backend and send a detailed message with mock data
+        if (demo && demo === 'true') {
+            if (!phone) {
+                return res.status(400).json({ error: 'Phone number is required for demo mode' });
+            }
+            const chatIdSender = `${phone.replace(/[^0-9]/g, '')}@s.whatsapp.net`;
+            // Determine plumber WhatsApp ID if provided
+            let chatIdPlumber = null;
+            if (plumber_id) {
+                chatIdPlumber = `${plumber_id.replace(/[^0-9]/g, '')}@s.whatsapp.net`;
+            }
+            // Build a concise message using the raw fields; include mock map link if location provided
+            const mapLink = location ? `https://maps.google.com/?q=${encodeURIComponent(location)}` : 'https://maps.google.com/?q=MockLocation';
+            const messageLines = [];
+            messageLines.push('🚨 New Plumber Request (Demo)');
+            messageLines.push(`📞 Phone: ${phone}`);
+            if (description) messageLines.push(`📝 Description: ${description}`);
+            if (location) messageLines.push(`📍 Location: ${location}`);
+            messageLines.push(`🗺️ Map: ${mapLink}`);
+            const messageText = messageLines.join('\n');
+            // Send text to the requester
+            await sock.sendMessage(chatIdSender, { text: messageText });
+            // Send text to plumber if we have their number
+            if (chatIdPlumber) {
+                await sock.sendMessage(chatIdPlumber, { text: messageText });
+            }
+
+            // If an image was uploaded, forward it to both parties
+            if (req.file) {
+                const imageData = req.file.buffer;
+                // Send image to requester
+                await sock.sendMessage(chatIdSender, { image: imageData, caption: description || '' });
+                // Send image to plumber if number known
+                if (chatIdPlumber) {
+                    await sock.sendMessage(chatIdPlumber, { image: imageData, caption: description || '' });
+                }
+            }
+
+            console.log('✅ Demo WhatsApp detailed message sent to both parties');
+            console.log('✅ Demo WhatsApp detailed message sent');
+            return res.json({ success: true, demo: true });
+        }
+
         const formData = new FormData();
         formData.append('phone', phone);
         formData.append('description', description);
-        
-        if (location) formData.append('location', location);
-        if (customer_name) formData.append('customer_name', customer_name);
-        if (plumber_id) formData.append('plumber_id', plumber_id);
-        if (demo) formData.append('demo', demo);
 
-        if (req.file) {
-            const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
-            formData.append('image', blob, req.file.originalname);
+        {
+            return res.status(400).json({ error: 'Phone number is required for demo mode' });
         }
-
-        let result = null;
-        let lastError = null;
+        const chatIdSender = `${phone.replace(/[^0-9]/g, '')}@s.whatsapp.net`;
+        // Determine plumber WhatsApp ID if provided
+        let chatIdPlumbe        const formData = new FormData();
+        formData.append('phone', phone);
+        formData.append('description', description);
+        
+et lastError = null;
         const maxRetries = 3;
 
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
