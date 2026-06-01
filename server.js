@@ -473,16 +473,18 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
         formData.append('phone', phone);
         formData.append('description', description);
 
-        {
-            return res.status(400).json({ error: 'Phone number is required for demo mode' });
+        if (location) formData.append('location', location);
+        if (customer_name) formData.append('customer_name', customer_name);
+        if (plumber_id) formData.append('plumber_id', plumber_id);
+        if (demo) formData.append('demo', demo);
+
+        if (req.file) {
+            const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
+            formData.append('image', blob, req.file.originalname);
         }
-        const chatIdSender = `${phone.replace(/[^0-9]/g, '')}@s.whatsapp.net`;
-        // Determine plumber WhatsApp ID if provided
-        let chatIdPlumbe        const formData = new FormData();
-        formData.append('phone', phone);
-        formData.append('description', description);
-        
-et lastError = null;
+
+        let result = null;
+        let lastError = null;
         const maxRetries = 3;
 
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
