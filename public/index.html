@@ -511,20 +511,20 @@
                 <div class="progress-bar-fill" id="progress-bar-fill"></div>
                 <div class="step-indicator active" id="indicator-1">
                     1
-                    <div class="step-indicator-label">Contact</div>
+                    <div class="step-indicator-label">Issue</div>
                 </div>
                 <div class="step-indicator" id="indicator-2">
                     2
-                    <div class="step-indicator-label">Issue</div>
+                    <div class="step-indicator-label">Photo</div>
                 </div>
                 <div class="step-indicator" id="indicator-3">
                     3
-                    <div class="step-indicator-label">Photo</div>
+                    <div class="step-indicator-label">Contact</div>
                 </div>
             </div>
 
             <form id="incident-form">
-                <!-- STEP 1: Contact Details -->
+                <!-- STEP 1: Issue + Professional Selector -->
                 <div class="step-content active" id="step-panel-1">
 
                     <!-- Professional Type Selector -->
@@ -543,6 +543,48 @@
                         </div>
                     </div>
 
+                    <div class="form-group">
+                        <label for="description">Problem Description</label>
+                        <textarea id="description" name="description" placeholder="Describe your issue..."
+                            required></textarea>
+
+                        <div class="pill-wrapper" id="pill-wrapper"
+                            style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
+                            <!-- Pills are dynamically rendered by JS based on professional type -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2: Optional Image Upload -->
+                <div class="step-content" id="step-panel-2">
+                    <div class="form-group">
+                        <label>Attach Photo (Optional)</label>
+                        <div class="file-upload-wrapper">
+                            <input type="file" id="image" name="image" accept="image/*">
+                            <div class="file-upload-text">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                </svg>
+                                <span>Upload Image File</span>
+                            </div>
+                        </div>
+                        <div id="file-preview" style="display: none;">File selected</div>
+
+                        <!-- Premium Live Preview -->
+                        <div class="preview-container" id="preview-container">
+                            <div class="preview-overlay"></div>
+                            <button type="button" class="remove-preview-btn" id="remove-preview-btn"
+                                title="Remove Photo">&times;</button>
+                            <img id="live-image-preview" src="" alt="Incident Preview">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Contact Details -->
+                <div class="step-content" id="step-panel-3">
                     <div class="form-group">
                         <label for="customer_name">Your Name</label>
                         <div class="input-wrapper">
@@ -591,48 +633,6 @@
                             </div>
                             <input type="text" id="location" name="location"
                                 placeholder="Street name, apartment unit, city..." required>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- STEP 2: Issue Field -->
-                <div class="step-content" id="step-panel-2">
-                    <div class="form-group">
-                        <label for="description">Problem Description</label>
-                        <textarea id="description" name="description" placeholder="Describe your issue..."
-                            required></textarea>
-
-                        <div class="pill-wrapper" id="pill-wrapper"
-                            style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
-                            <!-- Pills are dynamically rendered by JS based on professional type -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- STEP 3: Optional Image Upload -->
-                <div class="step-content" id="step-panel-3">
-                    <div class="form-group">
-                        <label>Attach Photo (Optional)</label>
-                        <div class="file-upload-wrapper">
-                            <input type="file" id="image" name="image" accept="image/*">
-                            <div class="file-upload-text">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                    <polyline points="21 15 16 10 5 21"></polyline>
-                                </svg>
-                                <span>Upload Image File</span>
-                            </div>
-                        </div>
-                        <div id="file-preview" style="display: none;">File selected</div>
-
-                        <!-- Premium Live Preview -->
-                        <div class="preview-container" id="preview-container">
-                            <div class="preview-overlay"></div>
-                            <button type="button" class="remove-preview-btn" id="remove-preview-btn"
-                                title="Remove Photo">&times;</button>
-                            <img id="live-image-preview" src="" alt="Incident Preview">
                         </div>
                     </div>
                 </div>
@@ -792,6 +792,15 @@
 
         function validateStep(step) {
             if (step === 1) {
+                // Step 1 = Issue description
+                const desc = document.getElementById('description').value.trim();
+                if (desc.length < 10) {
+                    alert('Please provide a clear description of the problem (at least 10 characters).');
+                    document.getElementById('description').focus();
+                    return false;
+                }
+            } else if (step === 3) {
+                // Step 3 = Contact details
                 const name = document.getElementById('customer_name').value.trim();
                 const phone = phoneInput.value.replace(/\D/g, '');
                 const location = document.getElementById('location').value.trim();
@@ -809,13 +818,6 @@
                 if (!location) {
                     alert('Please enter the emergency address / location.');
                     document.getElementById('location').focus();
-                    return false;
-                }
-            } else if (step === 2) {
-                const desc = document.getElementById('description').value.trim();
-                if (desc.length < 10) {
-                    alert('Please provide a clear description of the problem (at least 10 characters).');
-                    document.getElementById('description').focus();
                     return false;
                 }
             }
