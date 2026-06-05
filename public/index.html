@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Emergency Plumbing Portal</title>
+    <title>Emergency Home Services Portal</title>
     <link rel="icon" type="image/x-icon" href="gemini-favi.ico">
     <link rel="shortcut icon" type="image/x-icon" href="gemini-favi.ico">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -19,13 +19,58 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
+
         .suggest-pill:hover {
             background: #27272a;
             color: #ffffff;
             border-color: #a1a1aa;
         }
+
         #reset-portal-btn:hover {
             background: #27272a !important;
+        }
+
+        /* Professional Type Selector */
+        .pro-selector {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .pro-btn {
+            flex: 1;
+            padding: 10px 6px;
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 10px;
+            color: #a1a1aa;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            margin-top: 0;
+            width: auto;
+        }
+
+        .pro-btn .pro-icon {
+            font-size: 20px;
+        }
+
+        .pro-btn:hover {
+            border-color: #a1a1aa;
+            color: #ffffff;
+            background: #27272a;
+        }
+
+        .pro-btn.selected {
+            background: #ffffff;
+            color: #000000;
+            border-color: #ffffff;
+            box-shadow: 0 0 14px rgba(255, 255, 255, 0.12);
         }
 
         :root {
@@ -78,6 +123,7 @@
                 opacity: 0;
                 transform: translateY(10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -195,7 +241,10 @@
 
         .file-upload-wrapper input[type="file"] {
             position: absolute;
-            left: 0; top: 0; width: 100%; height: 100%;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
             opacity: 0;
             cursor: pointer;
         }
@@ -349,6 +398,7 @@
                 opacity: 0;
                 transform: translateY(12px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -373,7 +423,8 @@
             background: #27272a;
         }
 
-        .btn-next, .btn-submit {
+        .btn-next,
+        .btn-submit {
             flex: 2;
             margin-top: 0;
         }
@@ -404,7 +455,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 50%);
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0) 50%);
             pointer-events: none;
         }
 
@@ -443,13 +494,16 @@
                 <div class="header-icon">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <path
+                            d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                        </path>
                         <line x1="12" y1="9" x2="12" y2="13"></line>
                         <line x1="12" y1="17" x2="12.01" y2="17"></line>
                     </svg>
                 </div>
-                <h1>Emergency Plumber</h1>
-                <p class="subtitle">Submit details. We will instantly process the issue and page our emergency plumber on WhatsApp.</p>
+                <h1>Emergency Services</h1>
+                <p class="subtitle">Submit details. We will instantly process the issue and page the right specialist on
+                    WhatsApp.</p>
             </div>
 
             <!-- Visual Progress Bar -->
@@ -472,32 +526,55 @@
             <form id="incident-form">
                 <!-- STEP 1: Contact Details -->
                 <div class="step-content active" id="step-panel-1">
+
+                    <!-- Professional Type Selector -->
+                    <div class="form-group">
+                        <label>Service Type</label>
+                        <div class="pro-selector">
+                            <button type="button" class="pro-btn selected" id="pro-plumber" data-type="plumber">
+                                <span class="pro-icon">🔧</span> Plumber
+                            </button>
+                            <button type="button" class="pro-btn" id="pro-hvac" data-type="hvac">
+                                <span class="pro-icon">❄️</span> HVAC
+                            </button>
+                            <button type="button" class="pro-btn" id="pro-electrician" data-type="electrician">
+                                <span class="pro-icon">⚡</span> Electrician
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label for="customer_name">Your Name</label>
                         <div class="input-wrapper">
                             <div class="input-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                     <circle cx="12" cy="7" r="4"></circle>
                                 </svg>
                             </div>
-                            <input type="text" id="customer_name" name="customer_name" placeholder="e.g. John Doe" required>
+                            <input type="text" id="customer_name" name="customer_name" placeholder="e.g. John Doe"
+                                required>
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label for="phone">Phone Number</label>
                         <div class="input-wrapper">
-                            <div class="input-icon" style="color: var(--text-secondary); font-weight: 600; font-size: 16px; left: 1.1rem;">
+                            <div class="input-icon"
+                                style="color: var(--text-secondary); font-weight: 600; font-size: 16px; left: 1.1rem;">
                                 +
                             </div>
-                            <input type="tel" id="phone" name="phone" placeholder="1 613 555 0143" style="padding-left: 2.2rem;" required>
+                            <input type="tel" id="phone" name="phone" placeholder="1 613 555 0143"
+                                style="padding-left: 2.2rem;" required>
                         </div>
-                        
-                        <div id="phone-hint" style="color: var(--text-secondary); font-size: 12px; margin-top: 6px; display: block; font-weight: 400; padding-left: 4px;">
+
+                        <div id="phone-hint"
+                            style="color: var(--text-secondary); font-size: 12px; margin-top: 6px; display: block; font-weight: 400; padding-left: 4px;">
                             Enter country code + phone number.
                         </div>
-                        <div id="phone-error" style="color: var(--error); font-size: 13px; margin-top: 6px; display: none; font-weight: 500;">
+                        <div id="phone-error"
+                            style="color: var(--error); font-size: 13px; margin-top: 6px; display: none; font-weight: 500;">
                             ❌ Invalid Number format.
                         </div>
                     </div>
@@ -506,12 +583,14 @@
                         <label for="location">Emergency Address / Location</label>
                         <div class="input-wrapper">
                             <div class="input-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                                     <circle cx="12" cy="10" r="3"></circle>
                                 </svg>
                             </div>
-                            <input type="text" id="location" name="location" placeholder="Street name, apartment unit, city..." required>
+                            <input type="text" id="location" name="location"
+                                placeholder="Street name, apartment unit, city..." required>
                         </div>
                     </div>
                 </div>
@@ -520,14 +599,12 @@
                 <div class="step-content" id="step-panel-2">
                     <div class="form-group">
                         <label for="description">Problem Description</label>
-                        <textarea id="description" name="description" placeholder="Describe the leak, block or damage..." required></textarea>
-                        
-                        <div class="pill-wrapper" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
-                            <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Burst pipe under sink gushing hot water and kitchen flooded">💦 Burst Pipe</button>
-                            <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Main sewage line backing up into the basement floor drain">💩 Sewer Backup</button>
-                            <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Water heater tank leaking from base and running cold">🔥 Water Heater Leak</button>
-                            <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Main toilet clogged up and overflowing onto bathroom floor">🚽 Clogged Toilet</button>
-                            <button type="button" class="suggest-pill" style="flex: 1 1 calc(33.333% - 8px); min-width: 140px;" data-text="Kitchen faucet leaking from handles with a steady slow drip">💧 Slow Faucet Drip</button>
+                        <textarea id="description" name="description" placeholder="Describe your issue..."
+                            required></textarea>
+
+                        <div class="pill-wrapper" id="pill-wrapper"
+                            style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
+                            <!-- Pills are dynamically rendered by JS based on professional type -->
                         </div>
                     </div>
                 </div>
@@ -549,11 +626,12 @@
                             </div>
                         </div>
                         <div id="file-preview" style="display: none;">File selected</div>
-                        
+
                         <!-- Premium Live Preview -->
                         <div class="preview-container" id="preview-container">
                             <div class="preview-overlay"></div>
-                            <button type="button" class="remove-preview-btn" id="remove-preview-btn" title="Remove Photo">&times;</button>
+                            <button type="button" class="remove-preview-btn" id="remove-preview-btn"
+                                title="Remove Photo">&times;</button>
                             <img id="live-image-preview" src="" alt="Incident Preview">
                         </div>
                     </div>
@@ -565,8 +643,8 @@
                     <button type="button" class="btn-next" id="btn-next">Next</button>
                     <button type="submit" class="btn-submit" id="submit-btn" style="display: none;">
                         <span>Send Request</span>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="22" y1="2" x2="11" y2="13"></line>
                             <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                         </svg>
@@ -575,14 +653,18 @@
             </form>
         </div>
 
-        <div class="minimal-card success-screen" id="success-card" style="display: none; text-align: center; padding: 40px 20px;">
+        <div class="minimal-card success-screen" id="success-card"
+            style="display: none; text-align: center; padding: 40px 20px;">
             <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
             <h1 style="color: var(--success); margin-bottom: 12px;">Request Registered!</h1>
-            <p style="color: var(--text-primary); font-size: 16px; margin-bottom: 8px; font-weight: 500;">Our best plumbers have been paged.</p>
-            <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 30px; max-width: 340px; margin-left: auto; margin-right: auto;">
+            <p style="color: var(--text-primary); font-size: 16px; margin-bottom: 8px; font-weight: 500;">Our specialist
+                has been paged.</p>
+            <p
+                style="color: var(--text-secondary); font-size: 14px; margin-bottom: 30px; max-width: 340px; margin-left: auto; margin-right: auto;">
                 Expect a phone call or WhatsApp updates shortly. You can safely close this screen now.
             </p>
-            <button type="button" id="reset-portal-btn" style="background: var(--border-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; transition: background 0.2s;">
+            <button type="button" id="reset-portal-btn"
+                style="background: var(--border-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; transition: background 0.2s;">
                 Submit Another Issue
             </button>
         </div>
@@ -595,7 +677,7 @@
         const phoneInput = document.getElementById('phone');
         const phoneError = document.getElementById('phone-error');
         const phoneHint = document.getElementById('phone-hint');
-        
+
         const portalCard = document.getElementById('portal-card');
         const successCard = document.getElementById('success-card');
         const resetPortalBtn = document.getElementById('reset-portal-btn');
@@ -613,11 +695,69 @@
         const liveImagePreview = document.getElementById('live-image-preview');
         const removePreviewBtn = document.getElementById('remove-preview-btn');
 
+        // ─── Professional Type Selector ───────────────────────────────────
+        let selectedProfessional = 'plumber';
+
+        const SUGGEST_PILLS = {
+            plumber: [
+                { emoji: '💦', label: 'Burst Pipe', text: 'Burst pipe under sink gushing hot water and kitchen flooded' },
+                { emoji: '💩', label: 'Sewer Backup', text: 'Main sewage line backing up into the basement floor drain' },
+                { emoji: '🔥', label: 'Water Heater Leak', text: 'Water heater tank leaking from base and running cold' },
+                { emoji: '🚽', label: 'Clogged Toilet', text: 'Main toilet clogged up and overflowing onto bathroom floor' },
+                { emoji: '💧', label: 'Faucet Drip', text: 'Kitchen faucet leaking from handles with a steady slow drip' },
+            ],
+            hvac: [
+                { emoji: '❄️', label: 'No Cooling', text: 'AC unit not cooling at all, compressor running but warm air only' },
+                { emoji: '🔥', label: 'No Heat', text: 'Furnace not igniting and home temperature dropping fast' },
+                { emoji: '💨', label: 'Strange Odor', text: 'Burning smell coming from HVAC vents when system turns on' },
+                { emoji: '💧', label: 'AC Leak', text: 'AC unit dripping water inside and refrigerant possibly leaking' },
+                { emoji: '🔊', label: 'Loud Noise', text: 'HVAC system making loud grinding or banging noise on startup' },
+            ],
+            electrician: [
+                { emoji: '⚡', label: 'Sparking Outlet', text: 'Electrical outlet sparking and burning smell coming from wall' },
+                { emoji: '🔌', label: 'Power Outage', text: 'Partial power outage in specific rooms, breaker keeps tripping' },
+                { emoji: '💡', label: 'Flickering Lights', text: 'Lights flickering throughout the house and dimming randomly' },
+                { emoji: '🔧', label: 'Breaker Trip', text: 'Circuit breaker tripping repeatedly after reset with no load change' },
+                { emoji: '🏠', label: 'Panel Issue', text: 'Electrical panel making humming noise and giving off a burning smell' },
+            ],
+        };
+
+        function renderPills(type) {
+            const wrapper = document.getElementById('pill-wrapper');
+            wrapper.innerHTML = '';
+            SUGGEST_PILLS[type].forEach(pill => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'suggest-pill';
+                btn.style.cssText = 'flex: 1 1 calc(33.333% - 8px); min-width: 140px;';
+                btn.setAttribute('data-text', pill.text);
+                btn.textContent = `${pill.emoji} ${pill.label}`;
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.getElementById('description').value = this.getAttribute('data-text');
+                });
+                wrapper.appendChild(btn);
+            });
+        }
+
+        // Wire up professional type buttons
+        document.querySelectorAll('.pro-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.pro-btn').forEach(b => b.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedProfessional = this.getAttribute('data-type');
+                renderPills(selectedProfessional);
+            });
+        });
+
+        // Initial pill render
+        renderPills('plumber');
+
         function updateWizardUI() {
             // Hide all steps first
             for (let i = 1; i <= totalSteps; i++) {
                 document.getElementById(`step-panel-${i}`).classList.remove('active');
-                
+
                 const indicator = document.getElementById(`indicator-${i}`);
                 indicator.className = 'step-indicator';
                 if (i === currentStep) {
@@ -713,13 +853,7 @@
 
         const plumberId = getPlumberId();
 
-        document.querySelectorAll('.suggest-pill').forEach(pill => {
-            pill.addEventListener('click', function(e) {
-                e.preventDefault();
-                const targetText = this.getAttribute('data-text');
-                document.getElementById('description').value = targetText;
-            });
-        });
+        // Pill click is now delegated in renderPills() above
 
         // Robust live file selection reading & display
         fileInput.addEventListener('change', function () {
@@ -730,7 +864,7 @@
 
                 // Load image into live preview using FileReader
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     liveImagePreview.src = e.target.result;
                     previewContainer.style.display = 'block';
                 };
@@ -755,46 +889,46 @@
 
         // List of all North American (NANP) Area Codes to catch missing '1' country code
         const northAmericanAreaCodes = [
-            '201','202','203','204','205','206','207','208','209','210','212','213','214','215','216','217','218','219','220',
-            '223','224','225','226','228','229','231','234','236','239','240','248','249','251','252','253','254','256','260',
-            '262','267','269','270','272','274','276','281','289','301','302','303','304','305','306','307','308','309','310',
-            '312','313','314','315','316','317','318','319','320','321','323','325','327','330','331','332','334','336','337',
-            '339','343','346','347','351','352','360','361','364','365','380','385','386','401','402','403','404','405','406',
-            '407','408','409','410','412','413','414','415','416','417','418','419','423','424','425','430','431','432','434',
-            '435','437','438','440','442','443','447','450','458','463','469','470','475','478','479','480','484','501','502',
-            '503','504','505','506','507','508','509','510','512','513','514','515','516','517','518','519','520','530','531',
-            '534','539','540','541','548','551','559','561','562','563','564','567','570','571','573','574','575','579','580',
-            '581','585','586','587','601','602','603','604','605','606','607','608','609','610','612','613','614','615','616',
-            '617','618','619','620','623','626','628','629','630','631','636','639','641','646','647','650','651','657','660',
-            '661','662','667','669','678','681','682','689','701','702','703','704','705','706','707','708','709','712','713',
-            '714','715','716','717','718','719','720','724','727','731','732','734','737','740','747','754','757','760','762',
-            '763','765','769','770','772','773','774','775','778','779','780','781','782','785','786','787','799','801','802',
-            '803','804','805','806','807','808','809','810','812','813','814','815','816','817','818','819','828','830','831',
-            '832','835','838','843','845','847','848','850','854','856','857','858','859','860','862','863','864','865','867',
-            '870','872','873','876','878','901','902','903','904','905','906','907','908','909','910','912','913','914','915',
-            '916','917','918','919','920','925','928','929','931','934','936','937','938','940','941','947','949','951','952',
-            '954','956','959','970','971','972','973','975','978','979','980','984','985','989'
+            '201', '202', '203', '204', '205', '206', '207', '208', '209', '210', '212', '213', '214', '215', '216', '217', '218', '219', '220',
+            '223', '224', '225', '226', '228', '229', '231', '234', '236', '239', '240', '248', '249', '251', '252', '253', '254', '256', '260',
+            '262', '267', '269', '270', '272', '274', '276', '281', '289', '301', '302', '303', '304', '305', '306', '307', '308', '309', '310',
+            '312', '313', '314', '315', '316', '317', '318', '319', '320', '321', '323', '325', '327', '330', '331', '332', '334', '336', '337',
+            '339', '343', '346', '347', '351', '352', '360', '361', '364', '365', '380', '385', '386', '401', '402', '403', '404', '405', '406',
+            '407', '408', '409', '410', '412', '413', '414', '415', '416', '417', '418', '419', '423', '424', '425', '430', '431', '432', '434',
+            '435', '437', '438', '440', '442', '443', '447', '450', '458', '463', '469', '470', '475', '478', '479', '480', '484', '501', '502',
+            '503', '504', '505', '506', '507', '508', '509', '510', '512', '513', '514', '515', '516', '517', '518', '519', '520', '530', '531',
+            '534', '539', '540', '541', '548', '551', '559', '561', '562', '563', '564', '567', '570', '571', '573', '574', '575', '579', '580',
+            '581', '585', '586', '587', '601', '602', '603', '604', '605', '606', '607', '608', '609', '610', '612', '613', '614', '615', '616',
+            '617', '618', '619', '620', '623', '626', '628', '629', '630', '631', '636', '639', '641', '646', '647', '650', '651', '657', '660',
+            '661', '662', '667', '669', '678', '681', '682', '689', '701', '702', '703', '704', '705', '706', '707', '708', '709', '712', '713',
+            '714', '715', '716', '717', '718', '719', '720', '724', '727', '731', '732', '734', '737', '740', '747', '754', '757', '760', '762',
+            '763', '765', '769', '770', '772', '773', '774', '775', '778', '779', '780', '781', '782', '785', '786', '787', '799', '801', '802',
+            '803', '804', '805', '806', '807', '808', '809', '810', '812', '813', '814', '815', '816', '817', '818', '819', '828', '830', '831',
+            '832', '835', '838', '843', '845', '847', '848', '850', '854', '856', '857', '858', '859', '860', '862', '863', '864', '865', '867',
+            '870', '872', '873', '876', '878', '901', '902', '903', '904', '905', '906', '907', '908', '909', '910', '912', '913', '914', '915',
+            '916', '917', '918', '919', '920', '925', '928', '929', '931', '934', '936', '937', '938', '940', '941', '947', '949', '951', '952',
+            '954', '956', '959', '970', '971', '972', '973', '975', '978', '979', '980', '984', '985', '989'
         ];
 
         // LIVE INPUT ENGINE: Intercepts and corrects errors based on international context
-        phoneInput.addEventListener('input', function(e) {
+        phoneInput.addEventListener('input', function (e) {
             let value = this.value;
-            
+
             // Remove any characters that aren't numbers or a plus sign
             let clean = value.replace(/[^\d+]/g, '');
-            
+
             // If they manually added a +, remove it since our container visually prefixes it
             if (clean.startsWith('+')) {
                 clean = clean.substring(1);
             }
-            
+
             // Extract raw base digits
             let digitsOnly = clean.replace(/\D/g, '');
 
             // AUTO-CORRECTION MATRIX: 
             // Only flag North American formatting if the input DOES NOT start with common European/Global prefixes
             const structuralInternationalPrefixes = ['33', '34', '39', '44', '49', '385', '387']; // France, Spain, Italy, UK, Germany, Croatia, Bosnia...
-            
+
             let isExplicitlyInternational = structuralInternationalPrefixes.some(prefix => digitsOnly.startsWith(prefix));
 
             if (digitsOnly.length === 10 && !isExplicitlyInternational) {
@@ -871,7 +1005,7 @@
                 phoneError.textContent = '❌ Cannot submit. Please provide a valid phone number with country code.';
                 phoneError.style.display = 'block';
                 phoneInput.focus();
-                return false; 
+                return false;
             }
 
             // Standardize output payload string matching expected international configurations
@@ -879,14 +1013,15 @@
 
             const formData = new FormData();
             formData.append('customer_name', document.getElementById('customer_name').value);
-            formData.append('phone', dynamicCleanInternationalFormat); 
+            formData.append('phone', dynamicCleanInternationalFormat);
             formData.append('location', document.getElementById('location').value);
             formData.append('description', document.getElementById('description').value);
-            
+            formData.append('professional_type', selectedProfessional);
+
             // Check for demo=true URL parameter flag
             const isDemo = isDemoModeActive();
             formData.append('demo', isDemo ? 'true' : 'false');
-            
+
             if (fileInput.files[0]) {
                 formData.append('image', fileInput.files[0]);
             }
@@ -909,9 +1044,15 @@
             phoneError.style.display = 'none';
             phoneHint.textContent = 'Enter country code + phone number.';
             phoneHint.style.display = 'block';
-            
+
             const formElements = form.querySelectorAll('input, textarea, button');
             formElements.forEach(el => el.disabled = false);
+
+            // Reset professional selector back to plumber
+            document.querySelectorAll('.pro-btn').forEach(b => b.classList.remove('selected'));
+            document.getElementById('pro-plumber').classList.add('selected');
+            selectedProfessional = 'plumber';
+            renderPills('plumber');
 
             currentStep = 1;
             updateWizardUI();
