@@ -235,8 +235,33 @@ async function startSock() {
 
 startSock();
 
+// Serve the demo page when the URL explicitly requests demo mode.
+app.get('/demo', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'demo.html'));
+});
+
+app.get('/demo.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'demo.html'));
+});
+
 // Route to serve index.html for specific plumber IDs (e.g. /id=1)
 app.get('/id=:plumber_id', (req, res) => {
+    const demoRequested = req.query.demo === 'true' || req.query.demo === '1';
+    if (demoRequested) {
+        return res.sendFile(path.join(__dirname, 'public', 'demo.html'));
+    }
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Support URLs where demo is embedded in the raw path (for example: /id=1&demo==true)
+app.get(/^\/id=.*$/i, (req, res) => {
+    const rawUrl = req.originalUrl || '';
+    const demoRequested = /(?:^|[?&])demo(?:=|==)?(?:true|1)/i.test(rawUrl);
+
+    if (demoRequested) {
+        return res.sendFile(path.join(__dirname, 'public', 'demo.html'));
+    }
+
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
@@ -420,12 +445,38 @@ app.post('/send', async (req, res) => {
 });
 
 // Endpoint to receive HTML form submissions and forward to FastAPI
-// Endpoint to receive HTML form submissions and forward to Python Engine
 app.post('/submit-form', upload.single('image'), async (req, res) => {
     try {
         const { phone, description, location, customer_name, plumber_id, demo, professional_type } = req.body;
         console.log(`🌐 Received web form from ${customer_name || 'Unknown'} (${phone}) [Plumber ID: ${plumber_id || 'None'} | Type: ${professional_type || 'plumber'} | Demo: ${demo}]`);
 
+        // Handle Quick Demo Mode Bypass directly inside Express
+        if (demo === 'true' || demo === true) {
+            console.log(`🚀 Demo Mode Active: Intercepting request and mock-paging provider directly via WhatsApp`);
+            
+            if (!isConnected || !sock) {
+                return res.status(503).json({ error: 'WhatsApp client is not connected' });
+            }
+
+            const cleanNumber = phone.replace(/[^0-9]/g, "");
+            const chatId = `${cleanNumber}@s.whatsapp.net`;
+            const typeUpper = (professional_type || 'plumber').toUpperCase();
+
+            // Constructing a simulated real-world AI payload structure
+            const mockAlertText = `🚨 *NEW EMERGENCY DISPATCH* 🚨\n\n` +
+                                  `👤 *Customer:* ${customer_name || 'John Doe'}\n` +
+                                  `📍 *Location:* ${location || '123 Main Street, Unit 4B'}\n` +
+                                  `🛠️ *Trade Required:* ${typeUpper}\n\n` +
+                                  `📋 *AI Incident Diagnosis:* ${description || 'System failure needing immediate dispatch.'}\n\n` +
+                                  `⚡ *Action Required:* Please reply to this message immediately to confirm availability.`;
+
+            await sock.sendMessage(chatId, { text: mockAlertText });
+            console.log(`✅ Demo dispatch message successfully pushed to mock provider: ${chatId}`);
+            
+            return res.json({ success: true, demo: true, message: 'Demo request simulated successfully!' });
+        }
+
+        // ─── Normal Non-Demo Path continues here ───────────────────────────
         const formData = new FormData();
         formData.append('phone', phone);
         formData.append('description', description);
@@ -472,7 +523,6 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
         }
 
         if (!result) throw new Error(lastError || 'FastAPI server did not respond.');
-
 
         res.json({ success: true, result });
     } catch (error) {

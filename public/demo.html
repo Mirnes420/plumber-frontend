@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Developer Sandbox Demo</title>
+    <!-- Reuse your existing CSS styling link here -->
+    <link rel="stylesheet" href="./style.css"> 
+</head>
+<body>
+
+    <div class="container">
+        <div class="minimal-card" id="portal-card">
+            <div class="header">
+                <div class="header-icon" style="color: #3b82f6;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="16 18 22 12 16 6"></polyline>
+                        <polyline points="8 6 2 12 8 18"></polyline>
+                    </svg>
+                </div>
+                <h1>Developer Sandbox</h1>
+                <p class="subtitle">Simulate an end-to-end incident dispatch. Enter your phone number below to receive a mock automated alert on WhatsApp.</p>
+            </div>
+
+            <form id="demo-form">
+                <!-- Service Type Target Selector -->
+                <div class="form-group">
+                    <label>Simulated Service Type</label>
+                    <div class="pro-selector" style="display: flex; gap: 8px; margin-bottom: 15px;">
+                        <button type="button" class="pro-btn selected" data-type="plumber" style="flex: 1; padding: 10px; border-radius: 6px; cursor: pointer;">🔧 Plumber</button>
+                        <button type="button" class="pro-btn" data-type="hvac" style="flex: 1; padding: 10px; border-radius: 6px; cursor: pointer;">❄️ HVAC</button>
+                    </div>
+                </div>
+
+                <!-- Number Entry -->
+                <div class="form-group">
+                    <label for="phone">Your WhatsApp Phone Number</label>
+                    <div class="input-wrapper" style="position: relative;">
+                        <div class="input-icon" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-weight: 600;">+</div>
+                        <input type="tel" id="phone" name="phone" placeholder="385919293138" style="padding-left: 28px; width: 100%; box-sizing: border-box;" required>
+                    </div>
+                    <div id="phone-hint" style="font-size: 12px; margin-top: 6px; color: #6b7280;">Include international country code without spaces or symbols.</div>
+                </div>
+
+                <div class="wizard-actions" style="margin-top: 20px;">
+                    <button type="submit" class="btn-submit" id="submit-btn" style="width: 100%; display: block;">
+                        Send Mock Request
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Success Acknowledgment UI Card -->
+        <div class="minimal-card success-screen" id="success-card" style="display: none; text-align: center; padding: 40px 20px;">
+            <div style="font-size: 48px; margin-bottom: 16px;">🚀</div>
+            <h1 style="color: #10b981; margin-bottom: 12px;">Mock Alert Dispatched!</h1>
+            <p style="color: #374151; font-size: 15px; margin-bottom: 20px;">
+                The dispatch payload bypass executed cleanly. Check your WhatsApp device shorty.
+            </p>
+            <button type="button" id="reset-btn" style="padding: 10px 20px; cursor: pointer; border-radius: 6px;">Send Another Test</button>
+        </div>
+    </div>
+
+    <script>
+        let selectedProfessional = 'plumber';
+        const form = document.getElementById('demo-form');
+        const phoneInput = document.getElementById('phone');
+        const portalCard = document.getElementById('portal-card');
+        const successCard = document.getElementById('success-card');
+        const resetBtn = document.getElementById('reset-btn');
+        const submitBtn = document.getElementById('submit-btn');
+
+        // Toggle service selector tabs
+        document.querySelectorAll('.pro-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.pro-btn').forEach(b => b.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedProfessional = this.getAttribute('data-type');
+            });
+        });
+
+        // Strip non-digit inputs dynamically 
+        phoneInput.addEventListener('input', function() {
+            this.value = this.value.replace(/[^\d]/g, '');
+        });
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const rawPhone = phoneInput.value.trim();
+
+            if (rawPhone.length < 8 || rawPhone.length > 15) {
+                return alert('Please enter a valid international phone number sequence.');
+            }
+
+            const formData = new FormData();
+            formData.append('phone', rawPhone);
+            formData.append('professional_type', selectedProfessional);
+            formData.append('demo', 'true');
+            // Static mock payloads to feed down the stream 
+            formData.append('customer_name', 'Demo Sandbox Client');
+            formData.append('location', '742 Evergreen Terrace, Sector 7G');
+            formData.append('description', `💥 SYSTEM ALERT: High priority emergency dispatch triggered for line diagnostics on a broken ${selectedProfessional.toUpperCase()} assembly.`);
+
+            try {
+                submitBtn.disabled = true;
+                submitBtn.textContent = "Processing Mock Request...";
+
+                const response = await fetch('/submit-form', {
+                    method: 'POST',
+                    body: formData
+                });
+                const resData = await response.json();
+
+                if (response.ok && resData.success) {
+                    portalCard.style.display = 'none';
+                    successCard.style.display = 'block';
+                } else {
+                    alert('Simulation aborted: ' + (resData.error || 'Check server logs'));
+                }
+            } catch (err) {
+                alert('Network processing breakdown: ' + err.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Send Mock Request";
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            successCard.style.display = 'none';
+            portalCard.style.display = 'block';
+            phoneInput.value = '';
+        });
+    </script>
+</body>
+</html>
