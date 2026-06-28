@@ -1,25 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Developer Sandbox Demo</title>
+    <link rel="icon" type="image/x-icon" href="logo.png">
     <!-- Reuse your existing CSS styling link here -->
-    <link rel="stylesheet" href="./style.css"> 
+    <link rel="stylesheet" href="./style.css">
 </head>
+
 <body>
 
     <div class="container">
         <div class="minimal-card" id="portal-card">
             <div class="header">
                 <div class="header-icon" style="color: #3b82f6;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="16 18 22 12 16 6"></polyline>
                         <polyline points="8 6 2 12 8 18"></polyline>
                     </svg>
                 </div>
                 <h1>Developer Sandbox</h1>
-                <p class="subtitle">Simulate an end-to-end incident dispatch. Enter your phone number below to receive a mock automated alert on WhatsApp.</p>
+                <p class="subtitle">Simulate an end-to-end incident dispatch. Enter your phone number below to receive a
+                    mock automated alert on WhatsApp.</p>
             </div>
 
             <form id="demo-form">
@@ -27,8 +32,25 @@
                 <div class="form-group">
                     <label>Simulated Service Type</label>
                     <div class="pro-selector" style="display: flex; gap: 8px; margin-bottom: 15px;">
-                        <button type="button" class="pro-btn selected" data-type="plumber" style="flex: 1; padding: 10px; border-radius: 6px; cursor: pointer;">🔧 Plumber</button>
-                        <button type="button" class="pro-btn" data-type="hvac" style="flex: 1; padding: 10px; border-radius: 6px; cursor: pointer;">❄️ HVAC</button>
+                        <button type="button" class="pro-btn selected" data-type="plumber"
+                            style="flex: 1; padding: 10px; border-radius: 6px; cursor: pointer;">
+                            <svg class="pro-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path
+                                    d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 0-7.94-7.94L9.76 1.4a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l2-2" />
+                                <path d="m15 13-9.5 9.5a1 1 0 0 1-1.4 0l-1.6-1.6a1 1 0 0 1 0-1.4L12 10" />
+                                <path d="m18 18 2.5 2.5a1 1 0 0 0 1.4 0l1.6-1.6a1 1 0 0 0 0-1.4L21 15" />
+                            </svg>
+                            Plumber
+                        </button>
+                        <button type="button" class="pro-btn" data-type="hvac"
+                            style="flex: 1; padding: 10px; border-radius: 6px; cursor: pointer;">
+                            <svg class="pro-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                            </svg>
+                            HVAC
+                        </button>
                     </div>
                 </div>
 
@@ -36,10 +58,14 @@
                 <div class="form-group">
                     <label for="phone">Your WhatsApp Phone Number</label>
                     <div class="input-wrapper" style="position: relative;">
-                        <div class="input-icon" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-weight: 600;">+</div>
-                        <input type="tel" id="phone" name="phone" placeholder="385919293138" style="padding-left: 28px; width: 100%; box-sizing: border-box;" required>
+                        <div class="input-icon"
+                            style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-weight: 600;">
+                            +</div>
+                        <input type="tel" id="phone" name="phone" placeholder="385919293138"
+                            style="padding-left: 28px; width: 100%; box-sizing: border-box;" required>
                     </div>
-                    <div id="phone-hint" style="font-size: 12px; margin-top: 6px; color: #6b7280;">Include international country code without spaces or symbols.</div>
+                    <div id="phone-hint" style="font-size: 12px; margin-top: 6px; color: #6b7280;">Include international
+                        country code without spaces or symbols.</div>
                 </div>
 
                 <div class="wizard-actions" style="margin-top: 20px;">
@@ -51,13 +77,15 @@
         </div>
 
         <!-- Success Acknowledgment UI Card -->
-        <div class="minimal-card success-screen" id="success-card" style="display: none; text-align: center; padding: 40px 20px;">
-            <div style="font-size: 48px; margin-bottom: 16px;">🚀</div>
+        <div class="minimal-card success-screen" id="success-card"
+            style="display: none; text-align: center; padding: 40px 20px;">
+
             <h1 style="color: #10b981; margin-bottom: 12px;">Mock Alert Dispatched!</h1>
             <p style="color: #374151; font-size: 15px; margin-bottom: 20px;">
                 The dispatch payload bypass executed cleanly. Check your WhatsApp device shorty.
             </p>
-            <button type="button" id="reset-btn" style="padding: 10px 20px; cursor: pointer; border-radius: 6px;">Send Another Test</button>
+            <button type="button" id="reset-btn" style="padding: 10px 20px; cursor: pointer; border-radius: 6px;">Send
+                Another Test</button>
         </div>
     </div>
 
@@ -80,11 +108,11 @@
         });
 
         // Strip non-digit inputs dynamically 
-        phoneInput.addEventListener('input', function() {
+        phoneInput.addEventListener('input', function () {
             this.value = this.value.replace(/[^\d]/g, '');
         });
 
-        form.addEventListener('submit', async function(e) {
+        form.addEventListener('submit', async function (e) {
             e.preventDefault();
             const rawPhone = phoneInput.value.trim();
 
@@ -132,4 +160,5 @@
         });
     </script>
 </body>
+
 </html>

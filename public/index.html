@@ -5,9 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Emergency Home Services Portal</title>
-    <link rel="icon" type="image/x-icon" href="gemini-favi.ico">
-    <link rel="shortcut icon" type="image/x-icon" href="gemini-favi.ico">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="logo.png">
+    <link rel="shortcut icon" type="image/x-icon" href="logo.png">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@700;800;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="./style.css">
 </head>
 
@@ -16,19 +18,10 @@
     <div class="container">
         <div class="minimal-card" id="portal-card">
             <div class="header">
-                <div class="header-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path
-                            d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
-                        </path>
-                        <line x1="12" y1="9" x2="12" y2="13"></line>
-                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                    </svg>
-                </div>
-                <h1>Emergency Services</h1>
-                <p class="subtitle">Submit details. We will instantly process the issue and page the right specialist on
-                    WhatsApp.</p>
+                <div class="eyebrow">AUTOMATED DISPATCH FOR PLUMBERS, ELECTRICIANS AND PROFESSIONALS</div>
+                <h1>Handle emergencies like a pro.</h1>
+                <p class="subtitle">Submit details below. Your team gets a structured incident report on WhatsApp in
+                    under 15 seconds.</p>
             </div>
 
             <!-- Visual Progress Bar -->
@@ -55,15 +48,35 @@
                     <!-- Professional Type Selector -->
                     <div class="form-group">
                         <label>Service Type</label>
-                        <div class="pro-selector">
+                        <div class="pro-selector-group">
                             <button type="button" class="pro-btn selected" id="pro-plumber" data-type="plumber">
-                                <span class="pro-icon">🔧</span> Plumber
+                                <svg class="pro-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path
+                                        d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 0-7.94-7.94L9.76 1.4a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l2-2" />
+                                    <path d="m15 13-9.5 9.5a1 1 0 0 1-1.4 0l-1.6-1.6a1 1 0 0 1 0-1.4L12 10" />
+                                    <path d="m18 18 2.5 2.5a1 1 0 0 0 1.4 0l1.6-1.6a1 1 0 0 0 0-1.4L21 15" />
+                                </svg>
+                                Plumber
                             </button>
+
                             <button type="button" class="pro-btn" id="pro-hvac" data-type="hvac">
-                                <span class="pro-icon">❄️</span> HVAC
+                                <svg class="pro-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                                </svg>
+                                HVAC
                             </button>
+
                             <button type="button" class="pro-btn" id="pro-electrician" data-type="electrician">
-                                <span class="pro-icon">⚡</span> Electrician
+                                <svg class="pro-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="m13 2-2 10h9L9 22l2-10H2L13 2z" />
+                                </svg>
+                                Electrician
                             </button>
                         </div>
                     </div>
