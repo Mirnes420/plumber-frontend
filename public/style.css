@@ -95,11 +95,11 @@ body::before {
     /* Your background image and gradient setup */
     background: 
         radial-gradient(circle, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 1) 85%),
-        url('img.png');
+        url('image.png');
         
-    background-repeat: no-repeat;
+    background-repeat: repeat;
     background-position: center center;
-    background-size: 80% auto;
+    background-size: 100% auto;
     
     /* ADJUST OPACITY HERE: 0.0 is invisible, 1.0 is full strength */
     opacity: 0.35; 
