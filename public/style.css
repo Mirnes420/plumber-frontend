@@ -75,14 +75,33 @@
 
 
 body {
+    position: relative;
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff; /* Ensures the page base remains crisp white */
+    min-height: 100vh;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* Pushes the layer safely behind your form card */
+    
+    /* Your background image and gradient setup */
     background: 
-        /* Layer 1: The white radial gradient mask that whiteness out the edges */
-        radial-gradient(circle, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 1) 95%), url('img.png');
+        radial-gradient(circle, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 1) 85%),
+        url('img.png');
+        
     background-repeat: no-repeat;
     background-position: center center;
-    background-size: 100% 100%; /* Controls the size of the doodle ring around your form */
-    background-attachment: fixed; /* Keeps the doodles in place if the user scrolls */
-    background-color: #ffffff; /* Seamlessly matches the white center and edges */
+    background-size: 80% auto;
+    
+    /* ADJUST OPACITY HERE: 0.0 is invisible, 1.0 is full strength */
+    opacity: 0.35; 
 }
 
 body {
