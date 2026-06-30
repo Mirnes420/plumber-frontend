@@ -73,9 +73,20 @@
     /* Icon matches text color on active state */
 }
 
+
+body {
+    background: 
+        /* Layer 1: The white radial gradient mask that whiteness out the edges */
+        radial-gradient(circle, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 1) 95%), url('img.png');
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: 100% 100%; /* Controls the size of the doodle ring around your form */
+    background-attachment: fixed; /* Keeps the doodles in place if the user scrolls */
+    background-color: #ffffff; /* Seamlessly matches the white center and edges */
+}
+
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--bg-color);
     color: var(--text-primary);
     min-height: 100vh;
     display: flex;

@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Emergency Home Services Portal</title>
     <link rel="icon" type="image/x-icon" href="logo.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="logo.png">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="logo.png">
+
+    <link rel="icon" type="image/png" sizes="192x192" href="logo.png">
+
+    <link rel="manifest" href="site.webmanifest">
     <link rel="shortcut icon" type="image/x-icon" href="logo.png">
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@700;800;900&display=swap"
@@ -51,7 +58,7 @@
                         <div class="pro-selector-group">
                             <button type="button" class="pro-btn selected" id="pro-plumber" data-type="plumber">
                                 <svg class="pro-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke="lightblue" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round">
                                     <path
                                         d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 0-7.94-7.94L9.76 1.4a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l2-2" />
@@ -63,16 +70,16 @@
 
                             <button type="button" class="pro-btn" id="pro-hvac" data-type="hvac">
                                 <svg class="pro-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke="red" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round">
-                                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                                     <path d="M12 2v20M2 12h20M12 12l5.5 5.5M12 12L6.5 6.5"/>
                                 </svg>
                                 HVAC
                             </button>
 
                             <button type="button" class="pro-btn" id="pro-electrician" data-type="electrician">
                                 <svg class="pro-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke="orange" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round">
                                     <path d="m13 2-2 10h9L9 22l2-10H2L13 2z" />
                                 </svg>
@@ -236,48 +243,65 @@
         // ─── Professional Type Selector ───────────────────────────────────
         let selectedProfessional = 'plumber';
 
-        const SUGGEST_PILLS = {
-            plumber: [
-                { emoji: '💦', label: 'Burst Pipe', text: 'Burst pipe under sink gushing hot water and kitchen flooded' },
-                { emoji: '💩', label: 'Sewer Backup', text: 'Main sewage line backing up into the basement floor drain' },
-                { emoji: '🔥', label: 'Water Heater Leak', text: 'Water heater tank leaking from base and running cold' },
-                { emoji: '🚽', label: 'Clogged Toilet', text: 'Main toilet clogged up and overflowing onto bathroom floor' },
-                { emoji: '💧', label: 'Faucet Drip', text: 'Kitchen faucet leaking from handles with a steady slow drip' },
-            ],
-            hvac: [
-                { emoji: '❄️', label: 'No Cooling', text: 'AC unit not cooling at all, compressor running but warm air only' },
-                { emoji: '🔥', label: 'No Heat', text: 'Furnace not igniting and home temperature dropping fast' },
-                { emoji: '💨', label: 'Strange Odor', text: 'Burning smell coming from HVAC vents when system turns on' },
-                { emoji: '💧', label: 'AC Leak', text: 'AC unit dripping water inside and refrigerant possibly leaking' },
-                { emoji: '🔊', label: 'Loud Noise', text: 'HVAC system making loud grinding or banging noise on startup' },
-            ],
-            electrician: [
-                { emoji: '⚡', label: 'Sparking Outlet', text: 'Electrical outlet sparking and burning smell coming from wall' },
-                { emoji: '🔌', label: 'Power Outage', text: 'Partial power outage in specific rooms, breaker keeps tripping' },
-                { emoji: '💡', label: 'Flickering Lights', text: 'Lights flickering throughout the house and dimming randomly' },
-                { emoji: '🔧', label: 'Breaker Trip', text: 'Circuit breaker tripping repeatedly after reset with no load change' },
-                { emoji: '🏠', label: 'Panel Issue', text: 'Electrical panel making humming noise and giving off a burning smell' },
-            ],
+       const SUGGEST_PILLS = {
+    plumber: [
+        { 
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="lightblue" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-13-7-13S5 10.7 5 15a7 7 0 0 0 7 7z"/></svg>`, 
+            label: 'Burst Pipe', 
+            text: 'Burst pipe under sink gushing hot water and kitchen flooded' 
+        },
+        { 
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="blue" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-13-7-13S5 10.7 5 15a7 7 0 0 0 7 7z"/><path d="M12 18a4 4 0 0 0 4-4" stroke-dasharray="2 2"/></svg>`,
+            label: 'Faucet Drip', 
+            text: 'Kitchen faucet leaking from handles with a steady slow drip' 
+        },
+    ],
+    hvac: [
+        { 
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>`, 
+            label: 'No Heat', 
+            text: 'Furnace not igniting and home temperature dropping fast' 
+        },
+        { 
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="orange" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`, 
+            label: 'Loud Noise', 
+            text: 'HVAC system making loud grinding or banging noise on startup' 
+        },
+    ],
+    electrician: [
+        { 
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="orange" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`, 
+            label: 'Sparking Outlet', 
+            text: 'Electrical outlet sparking and burning smell coming from wall' 
+        },
+        { 
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><path d="M18.36 6.64a9 9 0 0 1 0 12.73m-12.72 0a9 9 0 0 1 0-12.73M12 2v4m0 12v4M2 12h4m12 0h4"/></svg>`,
+            label: 'Power Outage', 
+            text: 'Partial power outage in specific rooms, breaker keeps tripping' 
+        },
+    ]
         };
 
-        function renderPills(type) {
-            const wrapper = document.getElementById('pill-wrapper');
-            wrapper.innerHTML = '';
-            SUGGEST_PILLS[type].forEach(pill => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'suggest-pill';
-                btn.style.cssText = 'flex: 1 1 calc(33.333% - 8px); min-width: 140px;';
-                btn.setAttribute('data-text', pill.text);
-                btn.textContent = `${pill.emoji} ${pill.label}`;
-                btn.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    document.getElementById('description').value = this.getAttribute('data-text');
-                });
-                wrapper.appendChild(btn);
+       function renderPills(type) {
+        const wrapper = document.getElementById('pill-wrapper');
+        wrapper.innerHTML = '';
+        SUGGEST_PILLS[type].forEach(pill => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'suggest-pill';
+            btn.style.cssText = 'flex: 1 1 calc(33.333% - 8px); min-width: 140px; display: inline-flex; align-items: center; gap: 6px; justify-content: center;';
+            btn.setAttribute('data-text', pill.text);
+            
+            // FIX: Changed from textContent to innerHTML, and emoji to icon
+            btn.innerHTML = `${pill.icon} <span>${pill.label}</span>`;
+            
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.getElementById('description').value = this.getAttribute('data-text');
             });
-        }
-
+            wrapper.appendChild(btn);
+        });
+    }
         // Wire up professional type buttons
         document.querySelectorAll('.pro-btn').forEach(btn => {
             btn.addEventListener('click', function () {
