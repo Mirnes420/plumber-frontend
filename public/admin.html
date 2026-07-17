@@ -576,8 +576,8 @@
         <div class="success-msg" id="login-success"></div>
 
         <div class="field">
-            <label for="login-phone">Phone Number</label>
-            <input type="tel" id="login-phone" placeholder="e.g. 385919293138" autocomplete="tel">
+            <label for="login-phone">Phone Number or Username</label>
+            <input type="text" id="login-phone" placeholder="e.g. 385919293138 — or type: admin" autocomplete="username">
         </div>
         <div class="field">
             <label for="login-password">Password</label>
@@ -587,6 +587,9 @@
 
         <div class="auth-toggle">
             No password yet? <a onclick="showSetPassword()">Set your password</a>
+        </div>
+        <div style="margin-top:1.1rem; padding:0.75rem 1rem; background:rgba(79,110,247,0.08); border:1px solid rgba(79,110,247,0.2); border-radius:8px; font-size:0.78rem; color:#7a7a90; line-height:1.5;">
+            <strong style="color:#4f6ef7;">Master access:</strong> Use <code style="background:rgba(255,255,255,0.07); padding:1px 5px; border-radius:4px;">admin</code> as username with the <code style="background:rgba(255,255,255,0.07); padding:1px 5px; border-radius:4px;">ADMIN_MASTER_PASSWORD</code> from your <code style="background:rgba(255,255,255,0.07); padding:1px 5px; border-radius:4px;">.env</code> file.
         </div>
     </div>
 
