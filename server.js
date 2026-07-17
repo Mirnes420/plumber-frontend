@@ -6,8 +6,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import pg from 'pg';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import cookieParser from 'cookie-parser';
 
 const { Pool } = pg;
+const JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'coherzo_admin_dev_secret_change_in_prod';
 
 // Load shared environment variables
 dotenv.config({ path: '../.env' });
@@ -38,9 +42,22 @@ const FASTAPI_URL = process.env.FASTAPI_URL || 'http://localhost:8000';
 const app = express();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const upload = multer({ storage: multer.memoryStorage() });
+
+// ── Admin DB Migration: ensure password_hash column exists ──
+async function runAdminMigration() {
+    const pool = getDbPool();
+    if (!pool) return;
+    try {
+        await pool.query(`ALTER TABLE plumbers ADD COLUMN IF NOT EXISTS password_hash TEXT`);
+        console.log('✅ Admin migration: password_hash column ready.');
+    } catch (err) {
+        console.error('⚠️ Admin migration error:', err.message);
+    }
+}
 
 let currentQR = "";
 let sock = null;
@@ -234,6 +251,7 @@ async function startSock() {
 }
 
 startSock();
+runAdminMigration();
 
 // Serve the demo page when the URL explicitly requests demo mode.
 app.get('/demo', (req, res) => {
@@ -531,6 +549,155 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
     }
 });
 
+
+// ==========================================================================
+// ADMIN DASHBOARD ROUTES
+// ==========================================================================
+
+// Serve admin.html
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+// Middleware: verify JWT from cookie
+function requireAdmin(req, res, next) {
+    const token = req.cookies?.admin_token;
+    if (!token) return res.status(401).json({ error: 'Not authenticated' });
+    try {
+        req.adminUser = jwt.verify(token, JWT_SECRET);
+        next();
+    } catch {
+        return res.status(401).json({ error: 'Invalid or expired session' });
+    }
+}
+
+// POST /api/admin/set-password
+app.post('/api/admin/set-password', async (req, res) => {
+    const { phone, password } = req.body;
+    if (!phone || !password || password.length < 6) {
+        return res.status(400).json({ error: 'Phone and a password of at least 6 characters are required.' });
+    }
+    const pool = getDbPool();
+    if (!pool) return res.status(503).json({ error: 'Database not configured' });
+
+    try {
+        const clean = phone.replace(/[^0-9]/g, '');
+        const result = await pool.query(
+            'SELECT id, name FROM plumbers WHERE plumber_phone = $1 AND active = true', [clean]
+        );
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Phone number not found. Contact your admin.' });
+        }
+        const hash = await bcrypt.hash(password, 10);
+        await pool.query('UPDATE plumbers SET password_hash = $1 WHERE plumber_phone = $2', [hash, clean]);
+        res.json({ success: true, name: result.rows[0].name });
+    } catch (err) {
+        console.error('set-password error:', err.message);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// POST /api/admin/login
+app.post('/api/admin/login', async (req, res) => {
+    const { phone, password } = req.body;
+    if (!phone || !password) return res.status(400).json({ error: 'Phone and password required.' });
+    const pool = getDbPool();
+    if (!pool) return res.status(503).json({ error: 'Database not configured' });
+
+    try {
+        const clean = phone.replace(/[^0-9]/g, '');
+        const result = await pool.query(
+            'SELECT id, name, plumber_phone, password_hash FROM plumbers WHERE plumber_phone = $1 AND active = true', [clean]
+        );
+        if (result.rows.length === 0) {
+            return res.status(401).json({ error: 'Invalid credentials.' });
+        }
+        const plumber = result.rows[0];
+        if (!plumber.password_hash) {
+            return res.status(401).json({ error: 'No password set. Use the Set Password option first.', needsPassword: true });
+        }
+        const match = await bcrypt.compare(password, plumber.password_hash);
+        if (!match) return res.status(401).json({ error: 'Invalid credentials.' });
+
+        const token = jwt.sign(
+            { id: plumber.id, name: plumber.name, phone: plumber.plumber_phone },
+            JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+        res.cookie('admin_token', token, { httpOnly: true, sameSite: 'Lax', maxAge: 86400000 });
+        res.json({ success: true, name: plumber.name });
+    } catch (err) {
+        console.error('login error:', err.message);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// POST /api/admin/logout
+app.post('/api/admin/logout', (req, res) => {
+    res.clearCookie('admin_token');
+    res.json({ success: true });
+});
+
+// GET /api/admin/me — check session
+app.get('/api/admin/me', requireAdmin, (req, res) => {
+    res.json({ name: req.adminUser.name, phone: req.adminUser.phone });
+});
+
+// GET /api/admin/incidents — returns incidents for this plumber with optional filters
+app.get('/api/admin/incidents', requireAdmin, async (req, res) => {
+    const pool = getDbPool();
+    if (!pool) return res.status(503).json({ error: 'Database not configured' });
+
+    const { urgency, status, from, to } = req.query;
+    const plumberPhone = req.adminUser.phone;
+
+    try {
+        let query = 'SELECT * FROM incidents WHERE plumber_phone = $1';
+        const params = [plumberPhone];
+        let idx = 2;
+
+        if (urgency && urgency !== 'ALL') {
+            query += ` AND urgency = $${idx++}`;
+            params.push(urgency);
+        }
+        if (status && status !== 'ALL') {
+            query += ` AND status = $${idx++}`;
+            params.push(status);
+        }
+        if (from) {
+            query += ` AND timestamp >= $${idx++}`;
+            params.push(new Date(from));
+        }
+        if (to) {
+            query += ` AND timestamp <= $${idx++}`;
+            params.push(new Date(to + 'T23:59:59'));
+        }
+        query += ' ORDER BY timestamp DESC LIMIT 200';
+
+        const result = await pool.query(query, params);
+        res.json({ incidents: result.rows });
+    } catch (err) {
+        console.error('incidents fetch error:', err.message);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// PATCH /api/admin/incident-status — update status of an incident
+app.patch('/api/admin/incident-status', requireAdmin, async (req, res) => {
+    const pool = getDbPool();
+    if (!pool) return res.status(503).json({ error: 'Database not configured' });
+    const { id, status } = req.body;
+    if (!id || !['PENDING', 'RESOLVED'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid id or status.' });
+    }
+    try {
+        await pool.query('UPDATE incidents SET status = $1 WHERE id = $2', [status, id]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('status update error:', err.message);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

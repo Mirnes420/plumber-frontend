@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coherzo Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0d0d10;
+            --surface: #17171c;
+            --surface2: #1e1e25;
+            --border: #2a2a35;
+            --text: #f0f0f4;
+            --text-muted: #7a7a90;
+            --accent: #4f6ef7;
+            --accent-hover: #3d5ce0;
+            --red: #ef4444;
+            --yellow: #f59e0b;
+            --green: #22c55e;
+            --radius: 10px;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── AUTH SCREENS ── */
+        .auth-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1.5rem;
+        }
+
+        .auth-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+        }
+
+        .auth-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 2rem;
+            text-decoration: none;
+        }
+
+        .auth-logo svg { color: var(--accent); }
+
+        .auth-card h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 0.35rem;
+        }
+
+        .auth-card .auth-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .field {
+            margin-bottom: 1.1rem;
+        }
+
+        .field label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .field input {
+            width: 100%;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 0.75rem 1rem;
+            color: var(--text);
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.15s;
+            outline: none;
+        }
+
+        .field input:focus { border-color: var(--accent); }
+
+        .btn-primary {
+            width: 100%;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius);
+            padding: 0.85rem 1rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 0.15s, opacity 0.15s;
+            margin-top: 0.5rem;
+        }
+
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+
+        .auth-toggle {
+            text-align: center;
+            font-size: 0.84rem;
+            color: var(--text-muted);
+            margin-top: 1.25rem;
+        }
+
+        .auth-toggle a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .auth-toggle a:hover { text-decoration: underline; }
+
+        .error-msg {
+            background: rgba(239,68,68,0.12);
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: var(--radius);
+            padding: 0.7rem 1rem;
+            font-size: 0.84rem;
+            color: var(--red);
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .success-msg {
+            background: rgba(34,197,94,0.12);
+            border: 1px solid rgba(34,197,94,0.3);
+            border-radius: var(--radius);
+            padding: 0.7rem 1rem;
+            font-size: 0.84rem;
+            color: var(--green);
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        /* ── DASHBOARD LAYOUT ── */
+        #dashboard { display: none; flex-direction: column; min-height: 100vh; }
+
+        .topbar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .topbar-logo {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .topbar-logo span { color: var(--accent); }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .admin-name {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            padding: 0.4rem 0.9rem;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: border-color 0.15s, color 0.15s;
+        }
+
+        .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+        .dash-main { padding: 2rem; flex: 1; max-width: 1400px; width: 100%; margin: 0 auto; }
+
+        .dash-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .dash-header h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+        }
+
+        .dash-header p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* ── FILTER BAR ── */
+        .filter-bar {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1rem 1.25rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: flex-end;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            min-width: 130px;
+        }
+
+        .filter-group label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+        }
+
+        .filter-group select,
+        .filter-group input[type="date"] {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            padding: 0.55rem 0.8rem;
+            color: var(--text);
+            font-size: 0.85rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.15s;
+            cursor: pointer;
+        }
+
+        .filter-group select:focus,
+        .filter-group input[type="date"]:focus { border-color: var(--accent); }
+
+        .btn-filter {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 7px;
+            padding: 0.55rem 1.2rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            align-self: flex-end;
+            transition: background 0.15s;
+        }
+
+        .btn-filter:hover { background: var(--accent-hover); }
+
+        .btn-clear-filter {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            padding: 0.55rem 0.9rem;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            font-family: inherit;
+            cursor: pointer;
+            align-self: flex-end;
+            transition: border-color 0.15s;
+        }
+
+        .btn-clear-filter:hover { border-color: var(--text-muted); color: var(--text); }
+
+        /* ── STATS STRIP ── */
+        .stats-strip {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-pill {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 0.6rem 1.1rem;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stat-pill strong { color: var(--text); font-size: 1rem; }
+
+        /* ── TABLE ── */
+        .table-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .table-empty {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            background: var(--surface2);
+            border-bottom: 1px solid var(--border);
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.12s;
+        }
+
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: var(--surface2); }
+
+        tbody td {
+            padding: 0.85rem 1rem;
+            font-size: 0.85rem;
+            color: var(--text);
+            vertical-align: middle;
+        }
+
+        .td-muted { color: var(--text-muted); font-size: 0.8rem; }
+
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.55rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .badge-high { background: rgba(239,68,68,0.15); color: var(--red); }
+        .badge-medium { background: rgba(245,158,11,0.15); color: var(--yellow); }
+        .badge-low { background: rgba(34,197,94,0.15); color: var(--green); }
+        .badge-pending { background: rgba(79,110,247,0.15); color: var(--accent); }
+        .badge-resolved { background: rgba(34,197,94,0.12); color: var(--green); }
+
+        .summary-cell {
+            max-width: 320px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* ── DETAIL DRAWER ── */
+        .drawer-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 400;
+            backdrop-filter: blur(2px);
+        }
+
+        .drawer {
+            position: fixed;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: min(520px, 96vw);
+            background: var(--surface);
+            border-left: 1px solid var(--border);
+            z-index: 500;
+            transform: translateX(100%);
+            transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .drawer.open { transform: translateX(0); }
+
+        .drawer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            background: var(--surface);
+            z-index: 10;
+        }
+
+        .drawer-header h3 { font-size: 1rem; font-weight: 700; }
+
+        .drawer-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.4rem;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0.2rem 0.4rem;
+            border-radius: 5px;
+            transition: background 0.12s;
+        }
+
+        .drawer-close:hover { background: var(--surface2); color: var(--text); }
+
+        .drawer-body { padding: 1.5rem; flex: 1; }
+
+        .detail-row {
+            margin-bottom: 1.25rem;
+        }
+
+        .detail-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: 0.4rem;
+        }
+
+        .detail-value {
+            font-size: 0.9rem;
+            color: var(--text);
+            line-height: 1.6;
+            background: var(--surface2);
+            border-radius: 8px;
+            padding: 0.7rem 0.9rem;
+        }
+
+        .gear-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            background: var(--surface2);
+            border-radius: 8px;
+            padding: 0.7rem 0.9rem;
+        }
+
+        .gear-tag {
+            background: rgba(79,110,247,0.12);
+            color: var(--accent);
+            border: 1px solid rgba(79,110,247,0.25);
+            border-radius: 20px;
+            padding: 0.2rem 0.6rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .drawer-status-row {
+            display: flex;
+            gap: 0.6rem;
+            margin-top: 1.5rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn-status {
+            flex: 1;
+            padding: 0.65rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-status.active-resolved { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.4); color: var(--green); }
+        .btn-status.active-pending { background: rgba(79,110,247,0.12); border-color: rgba(79,110,247,0.4); color: var(--accent); }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-row td {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .dash-main { padding: 1rem; }
+            .topbar { padding: 0 1rem; }
+            tbody td { padding: 0.7rem 0.6rem; font-size: 0.78rem; }
+            thead th { padding: 0.6rem 0.6rem; }
+            .filter-bar { gap: 0.75rem; }
+            .filter-group { min-width: 100px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════ AUTH SCREENS ═══════════════════════ -->
+<div class="auth-wrap" id="auth-wrap">
+
+    <!-- LOGIN CARD -->
+    <div class="auth-card" id="login-card">
+        <a class="auth-logo" href="/">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            Coherzo Admin
+        </a>
+        <h2>Sign in</h2>
+        <p class="auth-subtitle">Access your incident dashboard using your registered phone.</p>
+
+        <div class="error-msg" id="login-error"></div>
+        <div class="success-msg" id="login-success"></div>
+
+        <div class="field">
+            <label for="login-phone">Phone Number</label>
+            <input type="tel" id="login-phone" placeholder="e.g. 385919293138" autocomplete="tel">
+        </div>
+        <div class="field">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" placeholder="Your password" autocomplete="current-password">
+        </div>
+        <button class="btn-primary" id="login-btn" onclick="doLogin()">Sign In</button>
+
+        <div class="auth-toggle">
+            No password yet? <a onclick="showSetPassword()">Set your password</a>
+        </div>
+    </div>
+
+    <!-- SET PASSWORD CARD -->
+    <div class="auth-card" id="setpw-card" style="display:none;">
+        <a class="auth-logo" href="/">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            Coherzo Admin
+        </a>
+        <h2>Create Password</h2>
+        <p class="auth-subtitle">Your phone must already be registered by your admin. Enter it to set your password.</p>
+
+        <div class="error-msg" id="setpw-error"></div>
+        <div class="success-msg" id="setpw-success"></div>
+
+        <div class="field">
+            <label for="setpw-phone">Registered Phone</label>
+            <input type="tel" id="setpw-phone" placeholder="e.g. 385919293138" autocomplete="tel">
+        </div>
+        <div class="field">
+            <label for="setpw-password">New Password (min. 6 chars)</label>
+            <input type="password" id="setpw-password" placeholder="Choose a password">
+        </div>
+        <div class="field">
+            <label for="setpw-confirm">Confirm Password</label>
+            <input type="password" id="setpw-confirm" placeholder="Repeat password">
+        </div>
+        <button class="btn-primary" id="setpw-btn" onclick="doSetPassword()">Create Password</button>
+
+        <div class="auth-toggle">
+            Already have a password? <a onclick="showLogin()">Sign in</a>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ DASHBOARD ═══════════════════════ -->
+<div id="dashboard">
+    <header class="topbar">
+        <div class="topbar-logo">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            Coherzo <span>Admin</span>
+        </div>
+        <div class="topbar-right">
+            <span class="admin-name" id="admin-name-display"></span>
+            <button class="btn-logout" onclick="doLogout()">Sign Out</button>
+        </div>
+    </header>
+
+    <main class="dash-main">
+        <div class="dash-header">
+            <h1>Incident Dashboard</h1>
+            <p>View, filter and manage emergency requests dispatched to you.</p>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>Urgency</label>
+                <select id="f-urgency">
+                    <option value="ALL">All Levels</option>
+                    <option value="HIGH">🚨 High</option>
+                    <option value="MEDIUM">⚠️ Medium</option>
+                    <option value="LOW">✅ Low</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Status</label>
+                <select id="f-status">
+                    <option value="ALL">All Statuses</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="RESOLVED">Resolved</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>From Date</label>
+                <input type="date" id="f-from">
+            </div>
+            <div class="filter-group">
+                <label>To Date</label>
+                <input type="date" id="f-to">
+            </div>
+            <button class="btn-filter" onclick="loadIncidents()">Apply Filters</button>
+            <button class="btn-clear-filter" onclick="clearFilters()">Clear</button>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-strip" id="stats-strip"></div>
+
+        <!-- Table -->
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date / Time</th>
+                        <th>Customer</th>
+                        <th>Location</th>
+                        <th>Urgency</th>
+                        <th>Status</th>
+                        <th>Summary</th>
+                    </tr>
+                </thead>
+                <tbody id="incidents-tbody">
+                    <tr class="loading-row"><td colspan="6"><div class="spinner"></div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<!-- ═══════════════════════ DETAIL DRAWER ═══════════════════════ -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="incident-drawer">
+    <div class="drawer-header">
+        <h3>Incident Detail</h3>
+        <button class="drawer-close" onclick="closeDrawer()">&#x2715;</button>
+    </div>
+    <div class="drawer-body" id="drawer-body"></div>
+</div>
+
+<script>
+    // ── State
+    let allIncidents = [];
+    let currentIncident = null;
+
+    // ── Auth Views
+    function showLogin() {
+        document.getElementById('login-card').style.display = 'block';
+        document.getElementById('setpw-card').style.display = 'none';
+        clearMsgs();
+    }
+
+    function showSetPassword() {
+        document.getElementById('login-card').style.display = 'none';
+        document.getElementById('setpw-card').style.display = 'block';
+        clearMsgs();
+    }
+
+    function clearMsgs() {
+        ['login-error','login-success','setpw-error','setpw-success'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) { el.style.display = 'none'; el.textContent = ''; }
+        });
+    }
+
+    function showMsg(id, msg, isError = true) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+
+    // ── Login
+    async function doLogin() {
+        clearMsgs();
+        const phone = document.getElementById('login-phone').value.trim();
+        const password = document.getElementById('login-password').value;
+        if (!phone || !password) { showMsg('login-error', 'Please enter your phone and password.'); return; }
+        const btn = document.getElementById('login-btn');
+        btn.disabled = true; btn.textContent = 'Signing in…';
+        try {
+            const res = await fetch('/api/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone, password }),
+                credentials: 'same-origin'
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                if (data.needsPassword) showSetPassword();
+                showMsg('login-error', data.error || 'Login failed.');
+            } else {
+                enterDashboard(data.name);
+            }
+        } catch { showMsg('login-error', 'Network error. Try again.'); }
+        btn.disabled = false; btn.textContent = 'Sign In';
+    }
+
+    // Allow pressing Enter to submit login
+    document.getElementById('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+    // ── Set Password
+    async function doSetPassword() {
+        clearMsgs();
+        const phone = document.getElementById('setpw-phone').value.trim();
+        const password = document.getElementById('setpw-password').value;
+        const confirm = document.getElementById('setpw-confirm').value;
+        if (!phone) { showMsg('setpw-error', 'Phone number is required.'); return; }
+        if (password.length < 6) { showMsg('setpw-error', 'Password must be at least 6 characters.'); return; }
+        if (password !== confirm) { showMsg('setpw-error', 'Passwords do not match.'); return; }
+        const btn = document.getElementById('setpw-btn');
+        btn.disabled = true; btn.textContent = 'Setting password…';
+        try {
+            const res = await fetch('/api/admin/set-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone, password })
+            });
+            const data = await res.json();
+            if (!res.ok) { showMsg('setpw-error', data.error || 'Failed.'); }
+            else {
+                showMsg('setpw-success', `Password set for ${data.name}! You can now sign in.`, false);
+                setTimeout(() => { showLogin(); document.getElementById('login-phone').value = phone; }, 1800);
+            }
+        } catch { showMsg('setpw-error', 'Network error. Try again.'); }
+        btn.disabled = false; btn.textContent = 'Create Password';
+    }
+
+    // ── Logout
+    async function doLogout() {
+        await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('auth-wrap').style.display = 'flex';
+        showLogin();
+    }
+
+    // ── Enter Dashboard
+    function enterDashboard(name) {
+        document.getElementById('auth-wrap').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'flex';
+        document.getElementById('admin-name-display').textContent = '👤 ' + name;
+        loadIncidents();
+    }
+
+    // ── Load Incidents
+    async function loadIncidents() {
+        const tbody = document.getElementById('incidents-tbody');
+        tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><div class="spinner"></div></td></tr>';
+        document.getElementById('stats-strip').innerHTML = '';
+
+        const urgency = document.getElementById('f-urgency').value;
+        const status = document.getElementById('f-status').value;
+        const from = document.getElementById('f-from').value;
+        const to = document.getElementById('f-to').value;
+
+        const params = new URLSearchParams();
+        if (urgency !== 'ALL') params.set('urgency', urgency);
+        if (status !== 'ALL') params.set('status', status);
+        if (from) params.set('from', from);
+        if (to) params.set('to', to);
+
+        try {
+            const res = await fetch('/api/admin/incidents?' + params.toString(), { credentials: 'same-origin' });
+            if (res.status === 401) { doLogout(); return; }
+            const data = await res.json();
+            allIncidents = data.incidents || [];
+            renderTable(allIncidents);
+            renderStats(allIncidents);
+        } catch {
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="6">Failed to load incidents. Check your connection.</td></tr>';
+        }
+    }
+
+    function clearFilters() {
+        document.getElementById('f-urgency').value = 'ALL';
+        document.getElementById('f-status').value = 'ALL';
+        document.getElementById('f-from').value = '';
+        document.getElementById('f-to').value = '';
+        loadIncidents();
+    }
+
+    // ── Render Table
+    function renderTable(incidents) {
+        const tbody = document.getElementById('incidents-tbody');
+        if (!incidents.length) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:3rem;color:var(--text-muted);">No incidents found for the selected filters.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = incidents.map((inc, i) => {
+            const dt = inc.timestamp ? new Date(inc.timestamp) : null;
+            const dateStr = dt ? dt.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) : '—';
+            const timeStr = dt ? dt.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' }) : '';
+            const urgencyBadge = {
+                HIGH: '<span class="badge badge-high">High</span>',
+                MEDIUM: '<span class="badge badge-medium">Medium</span>',
+                LOW: '<span class="badge badge-low">Low</span>',
+            }[inc.urgency] || `<span class="badge">${inc.urgency || '—'}</span>`;
+            const statusBadge = inc.status === 'RESOLVED'
+                ? '<span class="badge badge-resolved">Resolved</span>'
+                : '<span class="badge badge-pending">Pending</span>';
+            const summary = (inc.summary || '').substring(0, 90) + ((inc.summary || '').length > 90 ? '…' : '');
+            const location = (inc.location || '—').substring(0, 28) + ((inc.location || '').length > 28 ? '…' : '');
+            return `<tr onclick="openDrawer(${i})">
+                <td><div>${dateStr}</div><div class="td-muted">${timeStr}</div></td>
+                <td><div>${inc.customer_name || '—'}</div><div class="td-muted">${inc.customer_phone || ''}</div></td>
+                <td class="td-muted">${location}</td>
+                <td>${urgencyBadge}</td>
+                <td>${statusBadge}</td>
+                <td class="summary-cell td-muted">${summary}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    // ── Stats
+    function renderStats(incidents) {
+        const total = incidents.length;
+        const high = incidents.filter(i => i.urgency === 'HIGH').length;
+        const pending = incidents.filter(i => i.status !== 'RESOLVED').length;
+        const resolved = incidents.filter(i => i.status === 'RESOLVED').length;
+        document.getElementById('stats-strip').innerHTML = `
+            <div class="stat-pill"><strong>${total}</strong> Total</div>
+            <div class="stat-pill" style="border-color:rgba(239,68,68,0.3)"><strong style="color:var(--red)">${high}</strong> High Priority</div>
+            <div class="stat-pill" style="border-color:rgba(79,110,247,0.3)"><strong style="color:var(--accent)">${pending}</strong> Pending</div>
+            <div class="stat-pill" style="border-color:rgba(34,197,94,0.3)"><strong style="color:var(--green)">${resolved}</strong> Resolved</div>
+        `;
+    }
+
+    // ── Drawer
+    function openDrawer(index) {
+        currentIncident = allIncidents[index];
+        const inc = currentIncident;
+        const dt = inc.timestamp ? new Date(inc.timestamp) : null;
+        const dateStr = dt ? dt.toLocaleString('en-GB') : '—';
+
+        // Gear tags
+        let gearHtml = '<div class="gear-list">';
+        const gearRaw = inc.gear || '';
+        const gearItems = gearRaw.split(',').map(s => s.trim()).filter(Boolean);
+        if (gearItems.length) {
+            gearHtml += gearItems.map(g => `<span class="gear-tag">${g}</span>`).join('');
+        } else {
+            gearHtml += '<span style="color:var(--text-muted);font-size:0.82rem;">No gear info available</span>';
+        }
+        gearHtml += '</div>';
+
+        const isPending = inc.status !== 'RESOLVED';
+        document.getElementById('drawer-body').innerHTML = `
+            <div class="detail-row"><div class="detail-label">Date & Time</div><div class="detail-value">${dateStr}</div></div>
+            <div class="detail-row"><div class="detail-label">Customer</div><div class="detail-value">${inc.customer_name || '—'}<br><span style="color:var(--text-muted);font-size:0.82rem;">${inc.customer_phone || ''}</span></div></div>
+            <div class="detail-row"><div class="detail-label">Location</div><div class="detail-value">${inc.location || '—'}</div></div>
+            <div class="detail-row"><div class="detail-label">Urgency</div><div class="detail-value">${inc.urgency || '—'}</div></div>
+            <div class="detail-row"><div class="detail-label">AI Summary</div><div class="detail-value">${inc.summary || '—'}</div></div>
+            <div class="detail-row"><div class="detail-label">Recommended Gear / Tools</div>${gearHtml}</div>
+            <div class="detail-row"><div class="detail-label">Raw Customer Message</div><div class="detail-value" style="font-size:0.82rem;">${inc.raw_message || '—'}</div></div>
+            <div class="drawer-status-row">
+                <button class="btn-status ${isPending ? 'active-pending' : ''}" onclick="setIncidentStatus('${inc.id}', 'PENDING')">Mark Pending</button>
+                <button class="btn-status ${!isPending ? 'active-resolved' : ''}" onclick="setIncidentStatus('${inc.id}', 'RESOLVED')">Mark Resolved</button>
+            </div>
+        `;
+
+        document.getElementById('drawer-overlay').style.display = 'block';
+        document.getElementById('incident-drawer').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDrawer() {
+        document.getElementById('drawer-overlay').style.display = 'none';
+        document.getElementById('incident-drawer').classList.remove('open');
+        document.body.style.overflow = '';
+        currentIncident = null;
+    }
+
+    async function setIncidentStatus(id, status) {
+        // Optimistic update in allIncidents
+        const inc = allIncidents.find(i => i.id === id);
+        if (inc) inc.status = status;
+        closeDrawer();
+        renderTable(allIncidents);
+        renderStats(allIncidents);
+
+        // Persist via FastAPI (best-effort)
+        try {
+            await fetch(`/api/admin/incident-status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, status }),
+                credentials: 'same-origin'
+            });
+        } catch { /* non-critical */ }
+    }
+
+    // ── Check session on load
+    (async () => {
+        try {
+            const res = await fetch('/api/admin/me', { credentials: 'same-origin' });
+            if (res.ok) {
+                const data = await res.json();
+                enterDashboard(data.name);
+            }
+        } catch { /* show login */ }
+    })();
+</script>
+</body>
+</html>
