@@ -1,12 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coherzo Admin Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         :root {
             --bg: #0d0d10;
@@ -47,7 +54,7 @@
             padding: 2.5rem 2rem;
             width: 100%;
             max-width: 400px;
-            box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
         }
 
         .auth-logo {
@@ -61,7 +68,9 @@
             text-decoration: none;
         }
 
-        .auth-logo svg { color: var(--accent); }
+        .auth-logo svg {
+            color: var(--accent);
+        }
 
         .auth-card h2 {
             font-size: 1.4rem;
@@ -102,7 +111,9 @@
             outline: none;
         }
 
-        .field input:focus { border-color: var(--accent); }
+        .field input:focus {
+            border-color: var(--accent);
+        }
 
         .btn-primary {
             width: 100%;
@@ -119,8 +130,14 @@
             margin-top: 0.5rem;
         }
 
-        .btn-primary:hover { background: var(--accent-hover); }
-        .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
 
         .auth-toggle {
             text-align: center;
@@ -136,11 +153,13 @@
             cursor: pointer;
         }
 
-        .auth-toggle a:hover { text-decoration: underline; }
+        .auth-toggle a:hover {
+            text-decoration: underline;
+        }
 
         .error-msg {
-            background: rgba(239,68,68,0.12);
-            border: 1px solid rgba(239,68,68,0.3);
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.3);
             border-radius: var(--radius);
             padding: 0.7rem 1rem;
             font-size: 0.84rem;
@@ -150,8 +169,8 @@
         }
 
         .success-msg {
-            background: rgba(34,197,94,0.12);
-            border: 1px solid rgba(34,197,94,0.3);
+            background: rgba(34, 197, 94, 0.12);
+            border: 1px solid rgba(34, 197, 94, 0.3);
             border-radius: var(--radius);
             padding: 0.7rem 1rem;
             font-size: 0.84rem;
@@ -161,7 +180,11 @@
         }
 
         /* ── DASHBOARD LAYOUT ── */
-        #dashboard { display: none; flex-direction: column; min-height: 100vh; }
+        #dashboard {
+            display: none;
+            flex-direction: column;
+            min-height: 100vh;
+        }
 
         .topbar {
             background: var(--surface);
@@ -185,7 +208,9 @@
             gap: 8px;
         }
 
-        .topbar-logo span { color: var(--accent); }
+        .topbar-logo span {
+            color: var(--accent);
+        }
 
         .topbar-right {
             display: flex;
@@ -212,9 +237,18 @@
             transition: border-color 0.15s, color 0.15s;
         }
 
-        .btn-logout:hover { border-color: var(--red); color: var(--red); }
+        .btn-logout:hover {
+            border-color: var(--red);
+            color: var(--red);
+        }
 
-        .dash-main { padding: 2rem; flex: 1; max-width: 1400px; width: 100%; margin: 0 auto; }
+        .dash-main {
+            padding: 2rem;
+            flex: 1;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+        }
 
         .dash-header {
             margin-bottom: 1.5rem;
@@ -274,7 +308,9 @@
         }
 
         .filter-group select:focus,
-        .filter-group input[type="date"]:focus { border-color: var(--accent); }
+        .filter-group input[type="date"]:focus {
+            border-color: var(--accent);
+        }
 
         .btn-filter {
             background: var(--accent);
@@ -290,7 +326,9 @@
             transition: background 0.15s;
         }
 
-        .btn-filter:hover { background: var(--accent-hover); }
+        .btn-filter:hover {
+            background: var(--accent-hover);
+        }
 
         .btn-clear-filter {
             background: transparent;
@@ -305,7 +343,10 @@
             transition: border-color 0.15s;
         }
 
-        .btn-clear-filter:hover { border-color: var(--text-muted); color: var(--text); }
+        .btn-clear-filter:hover {
+            border-color: var(--text-muted);
+            color: var(--text);
+        }
 
         /* ── STATS STRIP ── */
         .stats-strip {
@@ -327,7 +368,10 @@
             gap: 0.5rem;
         }
 
-        .stat-pill strong { color: var(--text); font-size: 1rem; }
+        .stat-pill strong {
+            color: var(--text);
+            font-size: 1rem;
+        }
 
         /* ── TABLE ── */
         .table-wrap {
@@ -367,8 +411,13 @@
             transition: background 0.12s;
         }
 
-        tbody tr:last-child { border-bottom: none; }
-        tbody tr:hover { background: var(--surface2); }
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        tbody tr:hover {
+            background: var(--surface2);
+        }
 
         tbody td {
             padding: 0.85rem 1rem;
@@ -377,7 +426,10 @@
             vertical-align: middle;
         }
 
-        .td-muted { color: var(--text-muted); font-size: 0.8rem; }
+        .td-muted {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
 
         .badge {
             display: inline-block;
@@ -389,11 +441,30 @@
             letter-spacing: 0.04em;
         }
 
-        .badge-high { background: rgba(239,68,68,0.15); color: var(--red); }
-        .badge-medium { background: rgba(245,158,11,0.15); color: var(--yellow); }
-        .badge-low { background: rgba(34,197,94,0.15); color: var(--green); }
-        .badge-pending { background: rgba(79,110,247,0.15); color: var(--accent); }
-        .badge-resolved { background: rgba(34,197,94,0.12); color: var(--green); }
+        .badge-high {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--red);
+        }
+
+        .badge-medium {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--yellow);
+        }
+
+        .badge-low {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--green);
+        }
+
+        .badge-pending {
+            background: rgba(79, 110, 247, 0.15);
+            color: var(--accent);
+        }
+
+        .badge-resolved {
+            background: rgba(34, 197, 94, 0.12);
+            color: var(--green);
+        }
 
         .summary-cell {
             max-width: 320px;
@@ -407,7 +478,7 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.6);
+            background: rgba(0, 0, 0, 0.6);
             z-index: 400;
             backdrop-filter: blur(2px);
         }
@@ -428,7 +499,9 @@
             overflow-y: auto;
         }
 
-        .drawer.open { transform: translateX(0); }
+        .drawer.open {
+            transform: translateX(0);
+        }
 
         .drawer-header {
             display: flex;
@@ -442,7 +515,10 @@
             z-index: 10;
         }
 
-        .drawer-header h3 { font-size: 1rem; font-weight: 700; }
+        .drawer-header h3 {
+            font-size: 1rem;
+            font-weight: 700;
+        }
 
         .drawer-close {
             background: none;
@@ -456,9 +532,15 @@
             transition: background 0.12s;
         }
 
-        .drawer-close:hover { background: var(--surface2); color: var(--text); }
+        .drawer-close:hover {
+            background: var(--surface2);
+            color: var(--text);
+        }
 
-        .drawer-body { padding: 1.5rem; flex: 1; }
+        .drawer-body {
+            padding: 1.5rem;
+            flex: 1;
+        }
 
         .detail-row {
             margin-bottom: 1.25rem;
@@ -492,9 +574,9 @@
         }
 
         .gear-tag {
-            background: rgba(79,110,247,0.12);
+            background: rgba(79, 110, 247, 0.12);
             color: var(--accent);
-            border: 1px solid rgba(79,110,247,0.25);
+            border: 1px solid rgba(79, 110, 247, 0.25);
             border-radius: 20px;
             padding: 0.2rem 0.6rem;
             font-size: 0.75rem;
@@ -523,8 +605,17 @@
             transition: all 0.15s;
         }
 
-        .btn-status.active-resolved { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.4); color: var(--green); }
-        .btn-status.active-pending { background: rgba(79,110,247,0.12); border-color: rgba(79,110,247,0.4); color: var(--accent); }
+        .btn-status.active-resolved {
+            background: rgba(34, 197, 94, 0.12);
+            border-color: rgba(34, 197, 94, 0.4);
+            color: var(--green);
+        }
+
+        .btn-status.active-pending {
+            background: rgba(79, 110, 247, 0.12);
+            border-color: rgba(79, 110, 247, 0.4);
+            color: var(--accent);
+        }
 
         /* Loading spinner */
         .spinner {
@@ -537,7 +628,11 @@
             animation: spin 0.7s linear infinite;
         }
 
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
 
         .loading-row td {
             text-align: center;
@@ -547,335 +642,369 @@
 
         /* Responsive */
         @media (max-width: 640px) {
-            .dash-main { padding: 1rem; }
-            .topbar { padding: 0 1rem; }
-            tbody td { padding: 0.7rem 0.6rem; font-size: 0.78rem; }
-            thead th { padding: 0.6rem 0.6rem; }
-            .filter-bar { gap: 0.75rem; }
-            .filter-group { min-width: 100px; }
+            .dash-main {
+                padding: 1rem;
+            }
+
+            .topbar {
+                padding: 0 1rem;
+            }
+
+            tbody td {
+                padding: 0.7rem 0.6rem;
+                font-size: 0.78rem;
+            }
+
+            thead th {
+                padding: 0.6rem 0.6rem;
+            }
+
+            .filter-bar {
+                gap: 0.75rem;
+            }
+
+            .filter-group {
+                min-width: 100px;
+            }
         }
     </style>
 </head>
+
 <body>
 
-<!-- ═══════════════════════ AUTH SCREENS ═══════════════════════ -->
-<div class="auth-wrap" id="auth-wrap">
+    <!-- ═══════════════════════ AUTH SCREENS ═══════════════════════ -->
+    <div class="auth-wrap" id="auth-wrap">
 
-    <!-- LOGIN CARD -->
-    <div class="auth-card" id="login-card">
-        <a class="auth-logo" href="/">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-            Coherzo Admin
-        </a>
-        <h2>Sign in</h2>
-        <p class="auth-subtitle">Access your incident dashboard using your registered phone.</p>
+        <!-- LOGIN CARD -->
+        <div class="auth-card" id="login-card">
+            <a class="auth-logo" href="/">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                Coherzo Admin
+            </a>
+            <h2>Sign in</h2>
+            <p class="auth-subtitle">Access your incident dashboard using your registered phone.</p>
 
-        <div class="error-msg" id="login-error"></div>
-        <div class="success-msg" id="login-success"></div>
+            <div class="error-msg" id="login-error"></div>
+            <div class="success-msg" id="login-success"></div>
 
-        <div class="field">
-            <label for="login-phone">Phone Number or Username</label>
-            <input type="text" id="login-phone" placeholder="e.g. 385919293138 — or type: admin" autocomplete="username">
+            <div class="field">
+                <label for="login-phone">Phone Number or Username</label>
+                <input type="text" id="login-phone" placeholder="e.g. 385919293138 — or type: admin"
+                    autocomplete="username">
+            </div>
+            <div class="field">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" placeholder="Your password" autocomplete="current-password">
+            </div>
+            <button class="btn-primary" id="login-btn" onclick="doLogin()">Sign In</button>
+
+            <div class="auth-toggle">
+                No password yet? <a onclick="showSetPassword()">Set your password</a>
+            </div>
+            <div
+                style="margin-top:1.1rem; padding:0.75rem 1rem; background:rgba(79,110,247,0.08); border:1px solid rgba(79,110,247,0.2); border-radius:8px; font-size:0.78rem; color:#7a7a90; line-height:1.5;">
+                <strong style="color:#4f6ef7;">Master access:</strong> Use <code
+                    style="background:rgba(255,255,255,0.07); padding:1px 5px; border-radius:4px;">admin</code> as
+                username with the <code
+                    style="background:rgba(255,255,255,0.07); padding:1px 5px; border-radius:4px;">ADMIN_MASTER_PASSWORD</code>
+                from your <code
+                    style="background:rgba(255,255,255,0.07); padding:1px 5px; border-radius:4px;">.env</code> file.
+            </div>
         </div>
-        <div class="field">
-            <label for="login-password">Password</label>
-            <input type="password" id="login-password" placeholder="Your password" autocomplete="current-password">
-        </div>
-        <button class="btn-primary" id="login-btn" onclick="doLogin()">Sign In</button>
 
-        <div class="auth-toggle">
-            No password yet? <a onclick="showSetPassword()">Set your password</a>
-        </div>
-        <div style="margin-top:1.1rem; padding:0.75rem 1rem; background:rgba(79,110,247,0.08); border:1px solid rgba(79,110,247,0.2); border-radius:8px; font-size:0.78rem; color:#7a7a90; line-height:1.5;">
-            <strong style="color:#4f6ef7;">Master access:</strong> Use <code style="background:rgba(255,255,255,0.07); padding:1px 5px; border-radius:4px;">admin</code> as username with the <code style="background:rgba(255,255,255,0.07); padding:1px 5px; border-radius:4px;">ADMIN_MASTER_PASSWORD</code> from your <code style="background:rgba(255,255,255,0.07); padding:1px 5px; border-radius:4px;">.env</code> file.
+        <!-- SET PASSWORD CARD -->
+        <div class="auth-card" id="setpw-card" style="display:none;">
+            <a class="auth-logo" href="/">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                Coherzo Admin
+            </a>
+            <h2>Create Password</h2>
+            <p class="auth-subtitle">Your phone must already be registered by your admin. Enter it to set your password.
+            </p>
+
+            <div class="error-msg" id="setpw-error"></div>
+            <div class="success-msg" id="setpw-success"></div>
+
+            <div class="field">
+                <label for="setpw-phone">Registered Phone</label>
+                <input type="tel" id="setpw-phone" placeholder="e.g. 385919293138" autocomplete="tel">
+            </div>
+            <div class="field">
+                <label for="setpw-password">New Password (min. 6 chars)</label>
+                <input type="password" id="setpw-password" placeholder="Choose a password">
+            </div>
+            <div class="field">
+                <label for="setpw-confirm">Confirm Password</label>
+                <input type="password" id="setpw-confirm" placeholder="Repeat password">
+            </div>
+            <button class="btn-primary" id="setpw-btn" onclick="doSetPassword()">Create Password</button>
+
+            <div class="auth-toggle">
+                Already have a password? <a onclick="showLogin()">Sign in</a>
+            </div>
         </div>
     </div>
 
-    <!-- SET PASSWORD CARD -->
-    <div class="auth-card" id="setpw-card" style="display:none;">
-        <a class="auth-logo" href="/">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-            Coherzo Admin
-        </a>
-        <h2>Create Password</h2>
-        <p class="auth-subtitle">Your phone must already be registered by your admin. Enter it to set your password.</p>
+    <!-- ═══════════════════════ DASHBOARD ═══════════════════════ -->
+    <div id="dashboard">
+        <header class="topbar">
+            <div class="topbar-logo">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                Coherzo <span>Admin</span>
+            </div>
+            <div class="topbar-right">
+                <span class="admin-name" id="admin-name-display"></span>
+                <button class="btn-logout" onclick="doLogout()">Sign Out</button>
+            </div>
+        </header>
 
-        <div class="error-msg" id="setpw-error"></div>
-        <div class="success-msg" id="setpw-success"></div>
+        <main class="dash-main">
+            <div class="dash-header">
+                <h1>Incident Dashboard</h1>
+                <p>View, filter and manage emergency requests dispatched to you.</p>
+            </div>
 
-        <div class="field">
-            <label for="setpw-phone">Registered Phone</label>
-            <input type="tel" id="setpw-phone" placeholder="e.g. 385919293138" autocomplete="tel">
-        </div>
-        <div class="field">
-            <label for="setpw-password">New Password (min. 6 chars)</label>
-            <input type="password" id="setpw-password" placeholder="Choose a password">
-        </div>
-        <div class="field">
-            <label for="setpw-confirm">Confirm Password</label>
-            <input type="password" id="setpw-confirm" placeholder="Repeat password">
-        </div>
-        <button class="btn-primary" id="setpw-btn" onclick="doSetPassword()">Create Password</button>
+            <!-- Filter Bar -->
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>Urgency</label>
+                    <select id="f-urgency">
+                        <option value="ALL">All Levels</option>
+                        <option value="HIGH">🚨 High</option>
+                        <option value="MEDIUM">⚠️ Medium</option>
+                        <option value="LOW">✅ Low</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Status</label>
+                    <select id="f-status">
+                        <option value="ALL">All Statuses</option>
+                        <option value="PENDING">Pending</option>
+                        <option value="RESOLVED">Resolved</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>From Date</label>
+                    <input type="date" id="f-from">
+                </div>
+                <div class="filter-group">
+                    <label>To Date</label>
+                    <input type="date" id="f-to">
+                </div>
+                <button class="btn-filter" onclick="loadIncidents()">Apply Filters</button>
+                <button class="btn-clear-filter" onclick="clearFilters()">Clear</button>
+            </div>
 
-        <div class="auth-toggle">
-            Already have a password? <a onclick="showLogin()">Sign in</a>
-        </div>
+            <!-- Stats -->
+            <div class="stats-strip" id="stats-strip"></div>
+
+            <!-- Table -->
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date / Time</th>
+                            <th>Customer</th>
+                            <th>Location</th>
+                            <th>Urgency</th>
+                            <th>Status</th>
+                            <th>Summary</th>
+                        </tr>
+                    </thead>
+                    <tbody id="incidents-tbody">
+                        <tr class="loading-row">
+                            <td colspan="6">
+                                <div class="spinner"></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
     </div>
-</div>
 
-<!-- ═══════════════════════ DASHBOARD ═══════════════════════ -->
-<div id="dashboard">
-    <header class="topbar">
-        <div class="topbar-logo">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-            Coherzo <span>Admin</span>
+    <!-- ═══════════════════════ DETAIL DRAWER ═══════════════════════ -->
+    <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+    <div class="drawer" id="incident-drawer">
+        <div class="drawer-header">
+            <h3>Incident Detail</h3>
+            <button class="drawer-close" onclick="closeDrawer()">&#x2715;</button>
         </div>
-        <div class="topbar-right">
-            <span class="admin-name" id="admin-name-display"></span>
-            <button class="btn-logout" onclick="doLogout()">Sign Out</button>
-        </div>
-    </header>
-
-    <main class="dash-main">
-        <div class="dash-header">
-            <h1>Incident Dashboard</h1>
-            <p>View, filter and manage emergency requests dispatched to you.</p>
-        </div>
-
-        <!-- Filter Bar -->
-        <div class="filter-bar">
-            <div class="filter-group">
-                <label>Urgency</label>
-                <select id="f-urgency">
-                    <option value="ALL">All Levels</option>
-                    <option value="HIGH">🚨 High</option>
-                    <option value="MEDIUM">⚠️ Medium</option>
-                    <option value="LOW">✅ Low</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>Status</label>
-                <select id="f-status">
-                    <option value="ALL">All Statuses</option>
-                    <option value="PENDING">Pending</option>
-                    <option value="RESOLVED">Resolved</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>From Date</label>
-                <input type="date" id="f-from">
-            </div>
-            <div class="filter-group">
-                <label>To Date</label>
-                <input type="date" id="f-to">
-            </div>
-            <button class="btn-filter" onclick="loadIncidents()">Apply Filters</button>
-            <button class="btn-clear-filter" onclick="clearFilters()">Clear</button>
-        </div>
-
-        <!-- Stats -->
-        <div class="stats-strip" id="stats-strip"></div>
-
-        <!-- Table -->
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date / Time</th>
-                        <th>Customer</th>
-                        <th>Location</th>
-                        <th>Urgency</th>
-                        <th>Status</th>
-                        <th>Summary</th>
-                    </tr>
-                </thead>
-                <tbody id="incidents-tbody">
-                    <tr class="loading-row"><td colspan="6"><div class="spinner"></div></td></tr>
-                </tbody>
-            </table>
-        </div>
-    </main>
-</div>
-
-<!-- ═══════════════════════ DETAIL DRAWER ═══════════════════════ -->
-<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
-<div class="drawer" id="incident-drawer">
-    <div class="drawer-header">
-        <h3>Incident Detail</h3>
-        <button class="drawer-close" onclick="closeDrawer()">&#x2715;</button>
+        <div class="drawer-body" id="drawer-body"></div>
     </div>
-    <div class="drawer-body" id="drawer-body"></div>
-</div>
 
-<script>
-    // ── State
-    let allIncidents = [];
-    let currentIncident = null;
+    <script>
+        // ── State
+        let allIncidents = [];
+        let currentIncident = null;
 
-    // ── Auth Views
-    function showLogin() {
-        document.getElementById('login-card').style.display = 'block';
-        document.getElementById('setpw-card').style.display = 'none';
-        clearMsgs();
-    }
+        // ── Auth Views
+        function showLogin() {
+            document.getElementById('login-card').style.display = 'block';
+            document.getElementById('setpw-card').style.display = 'none';
+            clearMsgs();
+        }
 
-    function showSetPassword() {
-        document.getElementById('login-card').style.display = 'none';
-        document.getElementById('setpw-card').style.display = 'block';
-        clearMsgs();
-    }
+        function showSetPassword() {
+            document.getElementById('login-card').style.display = 'none';
+            document.getElementById('setpw-card').style.display = 'block';
+            clearMsgs();
+        }
 
-    function clearMsgs() {
-        ['login-error','login-success','setpw-error','setpw-success'].forEach(id => {
+        function clearMsgs() {
+            ['login-error', 'login-success', 'setpw-error', 'setpw-success'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) { el.style.display = 'none'; el.textContent = ''; }
+            });
+        }
+
+        function showMsg(id, msg, isError = true) {
             const el = document.getElementById(id);
-            if (el) { el.style.display = 'none'; el.textContent = ''; }
-        });
-    }
-
-    function showMsg(id, msg, isError = true) {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.textContent = msg;
-        el.style.display = 'block';
-    }
-
-    // ── Login
-    async function doLogin() {
-        clearMsgs();
-        const phone = document.getElementById('login-phone').value.trim();
-        const password = document.getElementById('login-password').value;
-        if (!phone || !password) { showMsg('login-error', 'Please enter your phone and password.'); return; }
-        const btn = document.getElementById('login-btn');
-        btn.disabled = true; btn.textContent = 'Signing in…';
-        try {
-            const res = await fetch('/api/admin/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone, password }),
-                credentials: 'same-origin'
-            });
-            const data = await res.json();
-            if (!res.ok) {
-                if (data.needsPassword) showSetPassword();
-                showMsg('login-error', data.error || 'Login failed.');
-            } else {
-                enterDashboard(data.name);
-            }
-        } catch { showMsg('login-error', 'Network error. Try again.'); }
-        btn.disabled = false; btn.textContent = 'Sign In';
-    }
-
-    // Allow pressing Enter to submit login
-    document.getElementById('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
-
-    // ── Set Password
-    async function doSetPassword() {
-        clearMsgs();
-        const phone = document.getElementById('setpw-phone').value.trim();
-        const password = document.getElementById('setpw-password').value;
-        const confirm = document.getElementById('setpw-confirm').value;
-        if (!phone) { showMsg('setpw-error', 'Phone number is required.'); return; }
-        if (password.length < 6) { showMsg('setpw-error', 'Password must be at least 6 characters.'); return; }
-        if (password !== confirm) { showMsg('setpw-error', 'Passwords do not match.'); return; }
-        const btn = document.getElementById('setpw-btn');
-        btn.disabled = true; btn.textContent = 'Setting password…';
-        try {
-            const res = await fetch('/api/admin/set-password', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone, password })
-            });
-            const data = await res.json();
-            if (!res.ok) { showMsg('setpw-error', data.error || 'Failed.'); }
-            else {
-                showMsg('setpw-success', `Password set for ${data.name}! You can now sign in.`, false);
-                setTimeout(() => { showLogin(); document.getElementById('login-phone').value = phone; }, 1800);
-            }
-        } catch { showMsg('setpw-error', 'Network error. Try again.'); }
-        btn.disabled = false; btn.textContent = 'Create Password';
-    }
-
-    // ── Logout
-    async function doLogout() {
-        await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
-        document.getElementById('dashboard').style.display = 'none';
-        document.getElementById('auth-wrap').style.display = 'flex';
-        showLogin();
-    }
-
-    // ── Enter Dashboard
-    function enterDashboard(name) {
-        document.getElementById('auth-wrap').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'flex';
-        document.getElementById('admin-name-display').textContent = '👤 ' + name;
-        loadIncidents();
-    }
-
-    // ── Load Incidents
-    async function loadIncidents() {
-        const tbody = document.getElementById('incidents-tbody');
-        tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><div class="spinner"></div></td></tr>';
-        document.getElementById('stats-strip').innerHTML = '';
-
-        const urgency = document.getElementById('f-urgency').value;
-        const status = document.getElementById('f-status').value;
-        const from = document.getElementById('f-from').value;
-        const to = document.getElementById('f-to').value;
-
-        const params = new URLSearchParams();
-        if (urgency !== 'ALL') params.set('urgency', urgency);
-        if (status !== 'ALL') params.set('status', status);
-        if (from) params.set('from', from);
-        if (to) params.set('to', to);
-
-        try {
-            const res = await fetch('/api/admin/incidents?' + params.toString(), { credentials: 'same-origin' });
-            if (res.status === 401) { doLogout(); return; }
-            const data = await res.json();
-            allIncidents = data.incidents || [];
-            renderTable(allIncidents);
-            renderStats(allIncidents);
-        } catch {
-            tbody.innerHTML = '<tr class="loading-row"><td colspan="6">Failed to load incidents. Check your connection.</td></tr>';
+            if (!el) return;
+            el.textContent = msg;
+            el.style.display = 'block';
         }
-    }
 
-    function clearFilters() {
-        document.getElementById('f-urgency').value = 'ALL';
-        document.getElementById('f-status').value = 'ALL';
-        document.getElementById('f-from').value = '';
-        document.getElementById('f-to').value = '';
-        loadIncidents();
-    }
-
-    // ── Render Table
-    function renderTable(incidents) {
-        const tbody = document.getElementById('incidents-tbody');
-        if (!incidents.length) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:3rem;color:var(--text-muted);">No incidents found for the selected filters.</td></tr>';
-            return;
+        // ── Login
+        async function doLogin() {
+            clearMsgs();
+            const phone = document.getElementById('login-phone').value.trim();
+            const password = document.getElementById('login-password').value;
+            if (!phone || !password) { showMsg('login-error', 'Please enter your phone and password.'); return; }
+            const btn = document.getElementById('login-btn');
+            btn.disabled = true; btn.textContent = 'Signing in…';
+            try {
+                const res = await fetch('/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, password }),
+                    credentials: 'same-origin'
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    if (data.needsPassword) showSetPassword();
+                    showMsg('login-error', data.error || 'Login failed.');
+                } else {
+                    enterDashboard(data.name);
+                }
+            } catch { showMsg('login-error', 'Network error. Try again.'); }
+            btn.disabled = false; btn.textContent = 'Sign In';
         }
-        tbody.innerHTML = incidents.map((inc, i) => {
-            const dt = inc.timestamp ? new Date(inc.timestamp) : null;
-            const dateStr = dt ? dt.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) : '—';
-            const timeStr = dt ? dt.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' }) : '';
-            const urgencyBadge = {
-                HIGH: '<span class="badge badge-high">High</span>',
-                MEDIUM: '<span class="badge badge-medium">Medium</span>',
-                LOW: '<span class="badge badge-low">Low</span>',
-            }[inc.urgency] || `<span class="badge">${inc.urgency || '—'}</span>`;
-            const statusBadge = inc.status === 'RESOLVED'
-                ? '<span class="badge badge-resolved">Resolved</span>'
-                : '<span class="badge badge-pending">Pending</span>';
-            const summary = (inc.summary || '').substring(0, 90) + ((inc.summary || '').length > 90 ? '…' : '');
-            const location = (inc.location || '—').substring(0, 28) + ((inc.location || '').length > 28 ? '…' : '');
-            return `<tr onclick="openDrawer(${i})">
+
+        // Allow pressing Enter to submit login
+        document.getElementById('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+        // ── Set Password
+        async function doSetPassword() {
+            clearMsgs();
+            const phone = document.getElementById('setpw-phone').value.trim();
+            const password = document.getElementById('setpw-password').value;
+            const confirm = document.getElementById('setpw-confirm').value;
+            if (!phone) { showMsg('setpw-error', 'Phone number is required.'); return; }
+            if (password.length < 6) { showMsg('setpw-error', 'Password must be at least 6 characters.'); return; }
+            if (password !== confirm) { showMsg('setpw-error', 'Passwords do not match.'); return; }
+            const btn = document.getElementById('setpw-btn');
+            btn.disabled = true; btn.textContent = 'Setting password…';
+            try {
+                const res = await fetch('/api/admin/set-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, password })
+                });
+                const data = await res.json();
+                if (!res.ok) { showMsg('setpw-error', data.error || 'Failed.'); }
+                else {
+                    showMsg('setpw-success', `Password set for ${data.name}! You can now sign in.`, false);
+                    setTimeout(() => { showLogin(); document.getElementById('login-phone').value = phone; }, 1800);
+                }
+            } catch { showMsg('setpw-error', 'Network error. Try again.'); }
+            btn.disabled = false; btn.textContent = 'Create Password';
+        }
+
+        // ── Logout
+        async function doLogout() {
+            await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('auth-wrap').style.display = 'flex';
+            showLogin();
+        }
+
+        // ── Enter Dashboard
+        function enterDashboard(name) {
+            document.getElementById('auth-wrap').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'flex';
+            document.getElementById('admin-name-display').textContent = '👤 ' + name;
+            loadIncidents();
+        }
+
+        // ── Load Incidents
+        async function loadIncidents() {
+            const tbody = document.getElementById('incidents-tbody');
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><div class="spinner"></div></td></tr>';
+            document.getElementById('stats-strip').innerHTML = '';
+
+            const urgency = document.getElementById('f-urgency').value;
+            const status = document.getElementById('f-status').value;
+            const from = document.getElementById('f-from').value;
+            const to = document.getElementById('f-to').value;
+
+            const params = new URLSearchParams();
+            if (urgency !== 'ALL') params.set('urgency', urgency);
+            if (status !== 'ALL') params.set('status', status);
+            if (from) params.set('from', from);
+            if (to) params.set('to', to);
+
+            try {
+                const res = await fetch('/api/admin/incidents?' + params.toString(), { credentials: 'same-origin' });
+                if (res.status === 401) { doLogout(); return; }
+                const data = await res.json();
+                allIncidents = data.incidents || [];
+                renderTable(allIncidents);
+                renderStats(allIncidents);
+            } catch {
+                tbody.innerHTML = '<tr class="loading-row"><td colspan="6">Failed to load incidents. Check your connection.</td></tr>';
+            }
+        }
+
+        function clearFilters() {
+            document.getElementById('f-urgency').value = 'ALL';
+            document.getElementById('f-status').value = 'ALL';
+            document.getElementById('f-from').value = '';
+            document.getElementById('f-to').value = '';
+            loadIncidents();
+        }
+
+        // ── Render Table
+        function renderTable(incidents) {
+            const tbody = document.getElementById('incidents-tbody');
+            if (!incidents.length) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:3rem;color:var(--text-muted);">No incidents found for the selected filters.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = incidents.map((inc, i) => {
+                const dt = inc.timestamp ? new Date(inc.timestamp) : null;
+                const dateStr = dt ? dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+                const timeStr = dt ? dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '';
+                const urgencyBadge = {
+                    HIGH: '<span class="badge badge-high">High</span>',
+                    MEDIUM: '<span class="badge badge-medium">Medium</span>',
+                    LOW: '<span class="badge badge-low">Low</span>',
+                }[inc.urgency] || `<span class="badge">${inc.urgency || '—'}</span>`;
+                const statusBadge = inc.status === 'RESOLVED'
+                    ? '<span class="badge badge-resolved">Resolved</span>'
+                    : '<span class="badge badge-pending">Pending</span>';
+                const summary = (inc.summary || '').substring(0, 90) + ((inc.summary || '').length > 90 ? '…' : '');
+                const location = (inc.location || '—').substring(0, 28) + ((inc.location || '').length > 28 ? '…' : '');
+                return `<tr onclick="openDrawer(${i})">
                 <td><div>${dateStr}</div><div class="td-muted">${timeStr}</div></td>
                 <td><div>${inc.customer_name || '—'}</div><div class="td-muted">${inc.customer_phone || ''}</div></td>
                 <td class="td-muted">${location}</td>
@@ -883,43 +1012,43 @@
                 <td>${statusBadge}</td>
                 <td class="summary-cell td-muted">${summary}</td>
             </tr>`;
-        }).join('');
-    }
+            }).join('');
+        }
 
-    // ── Stats
-    function renderStats(incidents) {
-        const total = incidents.length;
-        const high = incidents.filter(i => i.urgency === 'HIGH').length;
-        const pending = incidents.filter(i => i.status !== 'RESOLVED').length;
-        const resolved = incidents.filter(i => i.status === 'RESOLVED').length;
-        document.getElementById('stats-strip').innerHTML = `
+        // ── Stats
+        function renderStats(incidents) {
+            const total = incidents.length;
+            const high = incidents.filter(i => i.urgency === 'HIGH').length;
+            const pending = incidents.filter(i => i.status !== 'RESOLVED').length;
+            const resolved = incidents.filter(i => i.status === 'RESOLVED').length;
+            document.getElementById('stats-strip').innerHTML = `
             <div class="stat-pill"><strong>${total}</strong> Total</div>
             <div class="stat-pill" style="border-color:rgba(239,68,68,0.3)"><strong style="color:var(--red)">${high}</strong> High Priority</div>
             <div class="stat-pill" style="border-color:rgba(79,110,247,0.3)"><strong style="color:var(--accent)">${pending}</strong> Pending</div>
             <div class="stat-pill" style="border-color:rgba(34,197,94,0.3)"><strong style="color:var(--green)">${resolved}</strong> Resolved</div>
         `;
-    }
-
-    // ── Drawer
-    function openDrawer(index) {
-        currentIncident = allIncidents[index];
-        const inc = currentIncident;
-        const dt = inc.timestamp ? new Date(inc.timestamp) : null;
-        const dateStr = dt ? dt.toLocaleString('en-GB') : '—';
-
-        // Gear tags
-        let gearHtml = '<div class="gear-list">';
-        const gearRaw = inc.gear || '';
-        const gearItems = gearRaw.split(',').map(s => s.trim()).filter(Boolean);
-        if (gearItems.length) {
-            gearHtml += gearItems.map(g => `<span class="gear-tag">${g}</span>`).join('');
-        } else {
-            gearHtml += '<span style="color:var(--text-muted);font-size:0.82rem;">No gear info available</span>';
         }
-        gearHtml += '</div>';
 
-        const isPending = inc.status !== 'RESOLVED';
-        document.getElementById('drawer-body').innerHTML = `
+        // ── Drawer
+        function openDrawer(index) {
+            currentIncident = allIncidents[index];
+            const inc = currentIncident;
+            const dt = inc.timestamp ? new Date(inc.timestamp) : null;
+            const dateStr = dt ? dt.toLocaleString('en-GB') : '—';
+
+            // Gear tags
+            let gearHtml = '<div class="gear-list">';
+            const gearRaw = inc.gear || '';
+            const gearItems = gearRaw.split(',').map(s => s.trim()).filter(Boolean);
+            if (gearItems.length) {
+                gearHtml += gearItems.map(g => `<span class="gear-tag">${g}</span>`).join('');
+            } else {
+                gearHtml += '<span style="color:var(--text-muted);font-size:0.82rem;">No gear info available</span>';
+            }
+            gearHtml += '</div>';
+
+            const isPending = inc.status !== 'RESOLVED';
+            document.getElementById('drawer-body').innerHTML = `
             <div class="detail-row"><div class="detail-label">Date & Time</div><div class="detail-value">${dateStr}</div></div>
             <div class="detail-row"><div class="detail-label">Customer</div><div class="detail-value">${inc.customer_name || '—'}<br><span style="color:var(--text-muted);font-size:0.82rem;">${inc.customer_phone || ''}</span></div></div>
             <div class="detail-row"><div class="detail-label">Location</div><div class="detail-value">${inc.location || '—'}</div></div>
@@ -933,47 +1062,48 @@
             </div>
         `;
 
-        document.getElementById('drawer-overlay').style.display = 'block';
-        document.getElementById('incident-drawer').classList.add('open');
-        document.body.style.overflow = 'hidden';
-    }
+            document.getElementById('drawer-overlay').style.display = 'block';
+            document.getElementById('incident-drawer').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
 
-    function closeDrawer() {
-        document.getElementById('drawer-overlay').style.display = 'none';
-        document.getElementById('incident-drawer').classList.remove('open');
-        document.body.style.overflow = '';
-        currentIncident = null;
-    }
+        function closeDrawer() {
+            document.getElementById('drawer-overlay').style.display = 'none';
+            document.getElementById('incident-drawer').classList.remove('open');
+            document.body.style.overflow = '';
+            currentIncident = null;
+        }
 
-    async function setIncidentStatus(id, status) {
-        // Optimistic update in allIncidents
-        const inc = allIncidents.find(i => i.id === id);
-        if (inc) inc.status = status;
-        closeDrawer();
-        renderTable(allIncidents);
-        renderStats(allIncidents);
+        async function setIncidentStatus(id, status) {
+            // Optimistic update in allIncidents
+            const inc = allIncidents.find(i => i.id === id);
+            if (inc) inc.status = status;
+            closeDrawer();
+            renderTable(allIncidents);
+            renderStats(allIncidents);
 
-        // Persist via FastAPI (best-effort)
-        try {
-            await fetch(`/api/admin/incident-status`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, status }),
-                credentials: 'same-origin'
-            });
-        } catch { /* non-critical */ }
-    }
+            // Persist via FastAPI (best-effort)
+            try {
+                await fetch(`/api/admin/incident-status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, status }),
+                    credentials: 'same-origin'
+                });
+            } catch { /* non-critical */ }
+        }
 
-    // ── Check session on load
-    (async () => {
-        try {
-            const res = await fetch('/api/admin/me', { credentials: 'same-origin' });
-            if (res.ok) {
-                const data = await res.json();
-                enterDashboard(data.name);
-            }
-        } catch { /* show login */ }
-    })();
-</script>
+        // ── Check session on load
+        (async () => {
+            try {
+                const res = await fetch('/api/admin/me', { credentials: 'same-origin' });
+                if (res.ok) {
+                    const data = await res.json();
+                    enterDashboard(data.name);
+                }
+            } catch { /* show login */ }
+        })();
+    </script>
 </body>
+
 </html>
