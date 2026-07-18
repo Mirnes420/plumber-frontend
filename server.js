@@ -597,6 +597,22 @@ async function proxyToFastAPI(req, res, targetPath) {
     }
 }
 
+// Backward-compatible aliases for the admin UI's current fetch paths.
+app.post('/admin/set-password', (req, res) => proxyToFastAPI(req, res, '/admin/set-password'));
+app.post('/admin/login', (req, res) => proxyToFastAPI(req, res, '/admin/login'));
+app.post('/admin/logout', (req, res) => {
+    res.clearCookie('admin_token');
+    res.json({ success: true });
+});
+app.get('/admin/me', (req, res) => proxyToFastAPI(req, res, '/admin/me'));
+app.get('/admin/plumbers', (req, res) => proxyToFastAPI(req, res, '/admin/plumbers'));
+app.get('/admin/incidents', (req, res) => {
+    const query = new URLSearchParams(req.query).toString();
+    proxyToFastAPI(req, res, `/admin/incidents?${query}`);
+});
+app.patch('/admin/incident-status', (req, res) => proxyToFastAPI(req, res, '/admin/incident-status'));
+
+// Preferred /api/admin routes.
 app.post('/api/admin/set-password', (req, res) => proxyToFastAPI(req, res, '/admin/set-password'));
 app.post('/api/admin/login', (req, res) => proxyToFastAPI(req, res, '/admin/login'));
 app.post('/api/admin/logout', (req, res) => {
@@ -607,7 +623,6 @@ app.get('/api/admin/me', (req, res) => proxyToFastAPI(req, res, '/admin/me'));
 app.get('/api/admin/plumbers', (req, res) => proxyToFastAPI(req, res, '/admin/plumbers'));
 
 app.get('/api/admin/incidents', (req, res) => {
-    // Map express query string directly
     const query = new URLSearchParams(req.query).toString();
     proxyToFastAPI(req, res, `/admin/incidents?${query}`);
 });
