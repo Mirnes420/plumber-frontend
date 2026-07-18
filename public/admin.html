@@ -740,11 +740,11 @@
                 </div>
                 <div class="field">
                     <label for="setpw-password">New Password (min. 6 chars)</label>
-                    <input type="password" id="setpw-password" name="password" placeholder="Choose a password">
+                    <input type="password" id="setpw-password" name="password" placeholder="Choose a password" autocomplete="new-password">
                 </div>
                 <div class="field">
                     <label for="setpw-confirm">Confirm Password</label>
-                    <input type="password" id="setpw-confirm" name="confirm" placeholder="Repeat password">
+                    <input type="password" id="setpw-confirm" name="confirm" placeholder="Repeat password" autocomplete="new-password">
                 </div>
                 <button class="btn-primary" id="setpw-btn" type="button" onclick="doSetPassword()">Create Password</button>
             </form>
@@ -879,7 +879,13 @@
         }
 
         // ── Login
-        // Remove any old keydown listener and replace with:
+        const adminTokenKey = 'coherzo_admin_token';
+
+        function getAuthHeader() {
+            const token = sessionStorage.getItem(adminTokenKey) || '';
+            return token ? { 'Authorization': `Bearer ${token}` } : {};
+        }
+
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             await doLogin();
@@ -910,6 +916,9 @@
                 if (!res.ok) {
                     showMsg('login-error', data.detail || 'Login failed.');
                 } else {
+                    if (data.token) {
+                        sessionStorage.setItem(adminTokenKey, data.token);
+                    }
                     enterDashboard(data.name);
                 }
             } catch (err) {
@@ -977,6 +986,7 @@
         }
         // ── Logout
         async function doLogout() {
+            sessionStorage.removeItem(adminTokenKey);
             await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
             document.getElementById('dashboard').style.display = 'none';
             document.getElementById('auth-wrap').style.display = 'flex';
@@ -1009,7 +1019,10 @@
             if (to) params.set('to', to);
 
             try {
-                const res = await fetch('/api/admin/incidents?' + params.toString(), { credentials: 'same-origin' });
+                const res = await fetch('/api/admin/incidents?' + params.toString(), {
+                    credentials: 'same-origin',
+                    headers: getAuthHeader()
+                });
                 if (res.status === 401) { doLogout(); return; }
                 const data = await res.json();
                 allIncidents = data.incidents || [];
@@ -1131,7 +1144,10 @@
             try {
                 await fetch(`/api/admin/incident-status`, {
                     method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeader()
+                    },
                     body: JSON.stringify({ id, status }),
                     credentials: 'same-origin'
                 });
@@ -1141,7 +1157,10 @@
         // ── Check session on load
         (async () => {
             try {
-                const res = await fetch('/api/admin/me', { credentials: 'same-origin' });
+                const res = await fetch('/api/admin/me', {
+                    credentials: 'same-origin',
+                    headers: getAuthHeader()
+                });
                 if (res.ok) {
                     const data = await res.json();
                     enterDashboard(data.name);

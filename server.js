@@ -587,10 +587,13 @@ async function proxyToFastAPI(req, res, targetPath) {
 
         const response = await fetch(url, fetchOptions);
         const contentType = response.headers.get('content-type') || '';
-        const setCookieHeaders = response.headers.getSetCookie?.() || [];
+        const setCookieHeader = response.headers.get('set-cookie');
 
-        for (const cookie of setCookieHeaders) {
-            res.append('Set-Cookie', cookie);
+        if (setCookieHeader) {
+            const setCookieValues = setCookieHeader.split(/,(?=[^,]+?=)/).map(v => v.trim());
+            for (const cookie of setCookieValues) {
+                res.append('Set-Cookie', cookie);
+            }
         }
 
         if (contentType.includes('application/json')) {
