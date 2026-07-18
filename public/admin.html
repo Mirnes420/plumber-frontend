@@ -915,7 +915,7 @@
             const btn = document.getElementById('setpw-btn');
             btn.disabled = true; btn.textContent = 'Setting password…';
             try {
-                const res = await fetch('/api/admin/set-password', {
+                const res = await fetch('/admin/set-password', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ phone, password })
@@ -932,7 +932,7 @@
 
         // ── Logout
         async function doLogout() {
-            await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
+            await fetch('/admin/logout', { method: 'POST', credentials: 'same-origin' });
             document.getElementById('dashboard').style.display = 'none';
             document.getElementById('auth-wrap').style.display = 'flex';
             showLogin();
@@ -964,7 +964,7 @@
             if (to) params.set('to', to);
 
             try {
-                const res = await fetch('/api/admin/incidents?' + params.toString(), { credentials: 'same-origin' });
+                const res = await fetch('/admin/incidents?' + params.toString(), { credentials: 'same-origin' });
                 if (res.status === 401) { doLogout(); return; }
                 const data = await res.json();
                 allIncidents = data.incidents || [];
@@ -1084,7 +1084,7 @@
 
             // Persist via FastAPI (best-effort)
             try {
-                await fetch(`/api/admin/incident-status`, {
+                await fetch(`/admin/incident-status`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id, status }),
@@ -1096,7 +1096,7 @@
         // ── Check session on load
         (async () => {
             try {
-                const res = await fetch('/api/admin/me', { credentials: 'same-origin' });
+                const res = await fetch('/admin/me', { credentials: 'same-origin' });
                 if (res.ok) {
                     const data = await res.json();
                     enterDashboard(data.name);
