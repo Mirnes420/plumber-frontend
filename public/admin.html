@@ -690,16 +690,18 @@
             <div class="error-msg" id="login-error"></div>
             <div class="success-msg" id="login-success"></div>
 
-            <div class="field">
-                <label for="login-phone">Phone Number or Username</label>
-                <input type="text" id="login-phone" placeholder="e.g. 385919293138 — or type: admin"
-                    autocomplete="username">
-            </div>
-            <div class="field">
-                <label for="login-password">Password</label>
-                <input type="password" id="login-password" placeholder="Your password" autocomplete="current-password">
-            </div>
-            <button class="btn-primary" id="login-btn" onclick="doLogin()">Sign In</button>
+            <form id="login-form" novalidate>
+                <div class="field">
+                    <label for="login-phone">Phone Number or Username</label>
+                    <input type="text" id="login-phone" name="phone" placeholder="e.g. 385919293138 — or type: admin"
+                        autocomplete="username">
+                </div>
+                <div class="field">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" name="password" placeholder="Your password" autocomplete="current-password">
+                </div>
+                <button class="btn-primary" id="login-btn" type="button" onclick="doLogin()">Sign In</button>
+            </form>
 
             <div class="auth-toggle">
                 No password yet? <a onclick="showSetPassword()">Set your password</a>
@@ -731,19 +733,21 @@
             <div class="error-msg" id="setpw-error"></div>
             <div class="success-msg" id="setpw-success"></div>
 
-            <div class="field">
-                <label for="setpw-phone">Registered Phone</label>
-                <input type="tel" id="setpw-phone" placeholder="e.g. 385919293138" autocomplete="tel">
-            </div>
-            <div class="field">
-                <label for="setpw-password">New Password (min. 6 chars)</label>
-                <input type="password" id="setpw-password" placeholder="Choose a password">
-            </div>
-            <div class="field">
-                <label for="setpw-confirm">Confirm Password</label>
-                <input type="password" id="setpw-confirm" placeholder="Repeat password">
-            </div>
-            <button class="btn-primary" id="setpw-btn" onclick="doSetPassword()">Create Password</button>
+            <form id="setpw-form" novalidate>
+                <div class="field">
+                    <label for="setpw-phone">Registered Phone</label>
+                    <input type="tel" id="setpw-phone" name="phone" placeholder="e.g. 385919293138" autocomplete="tel">
+                </div>
+                <div class="field">
+                    <label for="setpw-password">New Password (min. 6 chars)</label>
+                    <input type="password" id="setpw-password" name="password" placeholder="Choose a password">
+                </div>
+                <div class="field">
+                    <label for="setpw-confirm">Confirm Password</label>
+                    <input type="password" id="setpw-confirm" name="confirm" placeholder="Repeat password">
+                </div>
+                <button class="btn-primary" id="setpw-btn" type="button" onclick="doSetPassword()">Create Password</button>
+            </form>
 
             <div class="auth-toggle">
                 Already have a password? <a onclick="showLogin()">Sign in</a>
@@ -883,10 +887,8 @@
 
         async function doLogin() {
             clearMsgs();
-            const form = document.getElementById('login-form');
-            const formData = new FormData(form);
-            const phone = formData.get('phone').trim();
-            const password = formData.get('password');
+            const phone = document.getElementById('login-phone')?.value?.trim() || '';
+            const password = document.getElementById('login-password')?.value || '';
 
             if (!phone || !password) {
                 showMsg('login-error', 'Please enter your phone and password.');
@@ -898,7 +900,7 @@
             btn.textContent = 'Signing in…';
 
             try {
-                const res = await fetch('/admin/login', {
+                const res = await fetch('/api/admin/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ phone, password }),
@@ -928,11 +930,9 @@
 
         async function doSetPassword() {
             clearMsgs();
-            const form = document.getElementById('setpw-form');
-            const formData = new FormData(form);
-            const phone = formData.get('phone').trim();
-            const password = formData.get('password');
-            const confirm = formData.get('confirm');
+            const phone = document.getElementById('setpw-phone')?.value?.trim() || '';
+            const password = document.getElementById('setpw-password')?.value || '';
+            const confirm = document.getElementById('setpw-confirm')?.value || '';
 
             if (!phone) {
                 showMsg('setpw-error', 'Phone number is required.');
@@ -952,10 +952,11 @@
             btn.textContent = 'Setting password…';
 
             try {
-                const res = await fetch('/admin/set-password', {
+                const res = await fetch('/api/admin/set-password', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone, password })
+                    body: JSON.stringify({ phone, password }),
+                    credentials: 'same-origin'
                 });
                 const data = await res.json();
                 if (!res.ok) {
@@ -976,7 +977,7 @@
         }
         // ── Logout
         async function doLogout() {
-            await fetch('/admin/logout', { method: 'POST', credentials: 'same-origin' });
+            await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
             document.getElementById('dashboard').style.display = 'none';
             document.getElementById('auth-wrap').style.display = 'flex';
             showLogin();
@@ -1008,7 +1009,7 @@
             if (to) params.set('to', to);
 
             try {
-                const res = await fetch('/admin/incidents?' + params.toString(), { credentials: 'same-origin' });
+                const res = await fetch('/api/admin/incidents?' + params.toString(), { credentials: 'same-origin' });
                 if (res.status === 401) { doLogout(); return; }
                 const data = await res.json();
                 allIncidents = data.incidents || [];
@@ -1128,7 +1129,7 @@
 
             // Persist via FastAPI (best-effort)
             try {
-                await fetch(`/admin/incident-status`, {
+                await fetch(`/api/admin/incident-status`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id, status }),
@@ -1140,7 +1141,7 @@
         // ── Check session on load
         (async () => {
             try {
-                const res = await fetch('/admin/me', { credentials: 'same-origin' });
+                const res = await fetch('/api/admin/me', { credentials: 'same-origin' });
                 if (res.ok) {
                     const data = await res.json();
                     enterDashboard(data.name);
