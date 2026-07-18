@@ -562,13 +562,16 @@ app.get('/admin', (req, res) => {
 // Proxy handler to Python FastAPI backend
 async function proxyToFastAPI(req, res, targetPath) {
     const url = `${FASTAPI_URL}${targetPath}`;
-    
+
     // Forward request options, mapping cookies or authorization headers
     const headers = {
         'Content-Type': 'application/json',
         'Authorization': req.headers['authorization'] || ''
     };
-    if (req.cookies?.admin_token) {
+
+    if (req.headers.cookie) {
+        headers['Cookie'] = req.headers.cookie;
+    } else if (req.cookies?.admin_token) {
         headers['Cookie'] = `admin_token=${req.cookies.admin_token}`;
     }
 
@@ -583,14 +586,21 @@ async function proxyToFastAPI(req, res, targetPath) {
         }
 
         const response = await fetch(url, fetchOptions);
-        const data = await response.json();
-        
-        // If login response returns a token, set cookie in Express response
-        if (targetPath === '/admin/login' && data.success && data.token) {
-            res.cookie('admin_token', data.token, { httpOnly: true, sameSite: 'Lax', maxAge: 86400000 });
+        const contentType = response.headers.get('content-type') || '';
+        const setCookieHeaders = response.headers.getSetCookie?.() || [];
+
+        for (const cookie of setCookieHeaders) {
+            res.append('Set-Cookie', cookie);
         }
 
-        res.status(response.status).json(data);
+        if (contentType.includes('application/json')) {
+            const data = await response.json();
+            res.status(response.status).json(data);
+            return;
+        }
+
+        const text = await response.text();
+        res.status(response.status).type(contentType || 'text/plain').send(text);
     } catch (err) {
         console.error(`Proxy error connecting to FastAPI (${url}):`, err.message);
         res.status(502).json({ error: 'Backend server communication failure.' });
