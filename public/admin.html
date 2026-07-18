@@ -940,8 +940,11 @@
         async function doSetPassword() {
             clearMsgs();
             const phone = document.getElementById('setpw-phone')?.value?.trim() || '';
+            console.log('sending phone nuimber', phone);
             const password = document.getElementById('setpw-password')?.value || '';
+            console.log('sending password', password);
             const confirm = document.getElementById('setpw-confirm')?.value || '';
+            console.log('sending confirm', confirm);
 
             if (!phone) {
                 showMsg('setpw-error', 'Phone number is required.');
