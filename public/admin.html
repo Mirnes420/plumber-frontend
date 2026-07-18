@@ -115,6 +115,11 @@
             border-color: var(--accent);
         }
 
+        .field input[readonly] {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
         .btn-primary {
             width: 100%;
             background: var(--accent);
@@ -726,47 +731,35 @@
             <div class="dash-header">
                 <h1>Incident Dashboard</h1>
                 <p>View, filter and manage emergency requests dispatched to you.</p>
-                 <div class="auth-toggle">
-                No password yet? <a onclick="showSetPassword()">Set your password</a>
-            </div>
-            </div>
-
-                  <!-- SET PASSWORD CARD -->
-        <div class="auth-card" id="setpw-card" style="display:none;">
-            <a class="auth-logo" href="/">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-                Coherzo Admin
-            </a>
-            <h2>Create Password</h2>
-            <p class="auth-subtitle">Your phone must already be registered by your admin. Enter it to set your password.
-            </p>
-
-            <div class="error-msg" id="setpw-error"></div>
-            <div class="success-msg" id="setpw-success"></div>
-
-            <form id="setpw-form" novalidate>
-                <div class="field">
-                    <label for="setpw-phone">Registered Phone</label>
-                    <input type="tel" id="setpw-phone" name="phone" placeholder="e.g. 385919293138" autocomplete="tel">
+                <div class="auth-toggle">
+                    <a id="setpw-toggle-link" onclick="toggleSetPassword()">Set your password</a>
                 </div>
-                <div class="field">
-                    <label for="setpw-password">New Password (min. 6 chars)</label>
-                    <input type="password" id="setpw-password" name="password" placeholder="Choose a password" autocomplete="new-password">
-                </div>
-                <div class="field">
-                    <label for="setpw-confirm">Confirm Password</label>
-                    <input type="password" id="setpw-confirm" name="confirm" placeholder="Repeat password" autocomplete="new-password">
-                </div>
-                <button class="btn-primary" id="setpw-btn" type="button" onclick="doSetPassword()">Create Password</button>
-            </form>
-
-            <div class="auth-toggle">
-                Already have a password? <a onclick="showLogin()">Sign in</a>
             </div>
-        </div>
+
+            <!-- SET PASSWORD CARD -->
+            <div class="auth-card" id="setpw-card" style="display:none; margin-bottom: 1.5rem;">
+                <h2>Create Password</h2>
+                <p class="auth-subtitle">Setting a new password for your account below.</p>
+
+                <div class="error-msg" id="setpw-error"></div>
+                <div class="success-msg" id="setpw-success"></div>
+
+                <form id="setpw-form" novalidate>
+                    <div class="field">
+                        <label for="setpw-phone">Registered Phone</label>
+                        <input type="tel" id="setpw-phone" name="phone" readonly autocomplete="tel">
+                    </div>
+                    <div class="field">
+                        <label for="setpw-password">New Password (min. 6 chars)</label>
+                        <input type="password" id="setpw-password" name="password" placeholder="Choose a password" autocomplete="new-password">
+                    </div>
+                    <div class="field">
+                        <label for="setpw-confirm">Confirm Password</label>
+                        <input type="password" id="setpw-confirm" name="confirm" placeholder="Repeat password" autocomplete="new-password">
+                    </div>
+                    <button class="btn-primary" id="setpw-btn" type="button" onclick="doSetPassword()">Create Password</button>
+                </form>
+            </div>
 
             <!-- Filter Bar -->
             <div class="filter-bar">
@@ -841,18 +834,28 @@
         // ── State
         let allIncidents = [];
         let currentIncident = null;
+        let adminPhone = ''; // static phone for the logged-in account, set on login / session restore
 
         // ── Auth Views
         function showLogin() {
             document.getElementById('login-card').style.display = 'block';
-            document.getElementById('setpw-card').style.display = 'none';
             clearMsgs();
         }
 
-        function showSetPassword() {
-            document.getElementById('login-card').style.display = 'none';
-            document.getElementById('setpw-card').style.display = 'block';
-            clearMsgs();
+        function toggleSetPassword() {
+            const card = document.getElementById('setpw-card');
+            const link = document.getElementById('setpw-toggle-link');
+            const isOpen = card.style.display === 'block';
+
+            if (isOpen) {
+                card.style.display = 'none';
+                link.textContent = 'Set your password';
+            } else {
+                document.getElementById('setpw-phone').value = adminPhone;
+                clearMsgs();
+                card.style.display = 'block';
+                link.textContent = 'Hide password form';
+            }
         }
 
         function clearMsgs() {
@@ -910,6 +913,7 @@
                     if (data.token) {
                         sessionStorage.setItem(adminTokenKey, data.token);
                     }
+                    adminPhone = data.phone || phone;
                     enterDashboard(data.name);
                 }
             } catch (err) {
@@ -931,11 +935,8 @@
         async function doSetPassword() {
             clearMsgs();
             const phone = document.getElementById('setpw-phone')?.value?.trim() || '';
-            console.log('sending phone nuimber', phone);
             const password = document.getElementById('setpw-password')?.value || '';
-            console.log('sending password', password);
             const confirm = document.getElementById('setpw-confirm')?.value || '';
-            console.log('sending confirm', confirm);
 
             if (!phone) {
                 showMsg('setpw-error', 'Phone number is required.');
@@ -957,7 +958,10 @@
             try {
                 const res = await fetch('/api/admin/set-password', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeader()
+                    },
                     body: JSON.stringify({ phone, password }),
                     credentials: 'same-origin'
                 });
@@ -965,11 +969,12 @@
                 if (!res.ok) {
                     showMsg('setpw-error', data.detail || 'Failed.');
                 } else {
-                    showMsg('setpw-success', `Password set for ${data.name}! You can now sign in.`, false);
+                    showMsg('setpw-success', `Password updated for ${data.name}.`, false);
+                    document.getElementById('setpw-password').value = '';
+                    document.getElementById('setpw-confirm').value = '';
                     setTimeout(() => {
-                        showLogin();
-                        document.getElementById('login-phone').value = phone;
-                    }, 1800);
+                        toggleSetPassword();
+                    }, 1500);
                 }
             } catch {
                 showMsg('setpw-error', 'Network error. Try again.');
@@ -981,9 +986,12 @@
         // ── Logout
         async function doLogout() {
             sessionStorage.removeItem(adminTokenKey);
+            adminPhone = '';
             await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
             document.getElementById('dashboard').style.display = 'none';
             document.getElementById('auth-wrap').style.display = 'flex';
+            document.getElementById('setpw-card').style.display = 'none';
+            document.getElementById('setpw-toggle-link').textContent = 'Set your password';
             showLogin();
         }
 
@@ -992,6 +1000,7 @@
             document.getElementById('auth-wrap').style.display = 'none';
             document.getElementById('dashboard').style.display = 'flex';
             document.getElementById('admin-name-display').textContent = '👤 ' + name;
+            document.getElementById('setpw-phone').value = adminPhone;
             loadIncidents();
         }
 
@@ -1157,6 +1166,7 @@
                 });
                 if (res.ok) {
                     const data = await res.json();
+                    adminPhone = data.phone || '';
                     enterDashboard(data.name);
                 }
             } catch { /* show login */ }
