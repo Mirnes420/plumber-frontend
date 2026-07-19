@@ -745,10 +745,11 @@
                 <div class="success-msg" id="setpw-success"></div>
 
                 <form id="setpw-form" novalidate>
+
                     <div class="field">
-                        <label for="setpw-phone">Registered Phone</label>
-                        <input type="tel" id="setpw-phone" name="phone" readonly autocomplete="tel">
-                    </div>
+                    <label for="setpw-phone">Registered Phone</label>
+                    <input type="tel" id="setpw-phone" name="phone" placeholder="e.g. 123456789" autocomplete="tel">
+                </div>
                     <div class="field">
                         <label for="setpw-password">New Password (min. 6 chars)</label>
                         <input type="password" id="setpw-password" name="password" placeholder="Choose a password" autocomplete="new-password">
@@ -842,10 +843,24 @@
             clearMsgs();
         }
 
+        function applySetpwFieldState() {
+            const input = document.getElementById('setpw-phone');
+            if (isAdminMaster) {
+                input.readOnly = false;
+                input.value = '';
+                input.placeholder = 'e.g. 123456789';
+            } else {
+                input.readOnly = true;
+                input.value = adminPhone;
+                input.placeholder = '';
+            }
+        }
+
         function toggleSetPassword() {
             const card = document.getElementById('setpw-card');
             const link = document.getElementById('setpw-toggle-link');
             const isOpen = card.style.display === 'block';
+            applySetpwFieldState()
 
             if (isOpen) {
                 card.style.display = 'none';
