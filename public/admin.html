@@ -271,6 +271,56 @@
             color: var(--text-muted);
         }
 
+        /* ── SEARCH BAR ── */
+        .search-bar {
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .search-bar input {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 0.75rem 1rem 0.75rem 2.6rem;
+            color: var(--text);
+            font-size: 0.9rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .search-bar input:focus {
+            border-color: var(--accent);
+        }
+
+        .search-bar svg {
+            position: absolute;
+            left: 0.9rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .search-bar .search-clear {
+            position: absolute;
+            right: 0.7rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0.2rem 0.4rem;
+            display: none;
+        }
+
+        .search-bar .search-clear:hover {
+            color: var(--text);
+        }
+
         /* ── FILTER BAR ── */
         .filter-bar {
             background: var(--surface);
@@ -763,6 +813,18 @@
                 </form>
             </div>
 
+            <!-- Search Bar -->
+            <div class="search-bar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input type="text" id="search-input" placeholder="Search customer name, phone, location, or message..."
+                    oninput="onSearchInput()">
+                <button class="search-clear" id="search-clear-btn" onclick="clearSearch()">&#x2715;</button>
+            </div>
+
             <!-- Filter Bar -->
             <div class="filter-bar">
                 <div class="filter-group">
@@ -834,10 +896,12 @@
 
     <script>
         // ── State
-        let allIncidents = [];
+        let allIncidents = [];       // full result set from the last server fetch (post urgency/status/date filters)
+        let visibleIncidents = [];   // allIncidents further narrowed by the search box; this is what gets rendered
         let currentIncident = null;
         let adminPhone = ''; // static phone for the logged-in account, set on login / session restore
         let isAdminMaster = false; // true if the logged-in admin is a master admin (can set password for any phone)
+        let searchDebounceTimer = null;
 
         // ── Auth Views
         function showLogin() {
@@ -862,13 +926,12 @@
             const card = document.getElementById('setpw-card');
             const link = document.getElementById('setpw-toggle-link');
             const isOpen = card.style.display === 'block';
-            applySetpwFieldState()
 
             if (isOpen) {
                 card.style.display = 'none';
                 link.textContent = 'Set your password';
             } else {
-                document.getElementById('setpw-phone').value = adminPhone;
+                applySetpwFieldState();
                 clearMsgs();
                 card.style.display = 'block';
                 link.textContent = 'Hide password form';
@@ -1005,6 +1068,7 @@
         async function doLogout() {
             sessionStorage.removeItem(adminTokenKey);
             adminPhone = '';
+            isAdminMaster = false;
             await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
             document.getElementById('dashboard').style.display = 'none';
             document.getElementById('auth-wrap').style.display = 'flex';
@@ -1018,8 +1082,46 @@
             document.getElementById('auth-wrap').style.display = 'none';
             document.getElementById('dashboard').style.display = 'flex';
             document.getElementById('admin-name-display').textContent = '👤 ' + name;
-            document.getElementById('setpw-phone').value = adminPhone;
+            applySetpwFieldState();
             loadIncidents();
+        }
+
+        // ── Search
+        function onSearchInput() {
+            const clearBtn = document.getElementById('search-clear-btn');
+            const val = document.getElementById('search-input').value;
+            clearBtn.style.display = val ? 'block' : 'none';
+
+            // debounce so filtering doesn't run on every single keystroke
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(applySearch, 150);
+        }
+
+        function clearSearch() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('search-clear-btn').style.display = 'none';
+            applySearch();
+        }
+
+        function applySearch() {
+            const query = document.getElementById('search-input').value.trim().toLowerCase();
+
+            if (!query) {
+                visibleIncidents = allIncidents;
+            } else {
+                visibleIncidents = allIncidents.filter(inc => {
+                    const haystack = [
+                        inc.customer_name,
+                        inc.customer_phone,
+                        inc.location,
+                        inc.summary,
+                        inc.raw_message
+                    ].filter(Boolean).join(' ').toLowerCase();
+                    return haystack.includes(query);
+                });
+            }
+            renderTable(visibleIncidents);
+            renderStats(visibleIncidents);
         }
 
         // ── Load Incidents
@@ -1036,8 +1138,8 @@
             const params = new URLSearchParams();
             if (urgency !== 'ALL') params.set('urgency', urgency);
             if (status !== 'ALL') params.set('status', status);
-            if (from) params.set('from_date', from); 
-            if (to) params.set('to_date', to); 
+            if (from) params.set('from_date', from);
+            if (to) params.set('to_date', to);
 
             try {
                 const res = await fetch('/api/admin/incidents?' + params.toString(), {
@@ -1047,8 +1149,7 @@
                 if (res.status === 401) { doLogout(); return; }
                 const data = await res.json();
                 allIncidents = data.incidents || [];
-                renderTable(allIncidents);
-                renderStats(allIncidents);
+                applySearch(); // re-apply whatever search term is currently in the box
             } catch {
                 tbody.innerHTML = '<tr class="loading-row"><td colspan="6">Failed to load incidents. Check your connection.</td></tr>';
             }
@@ -1110,7 +1211,7 @@
 
         // ── Drawer
         function openDrawer(index) {
-            currentIncident = allIncidents[index];
+            currentIncident = visibleIncidents[index];
             const inc = currentIncident;
             const dt = inc.timestamp ? new Date(inc.timestamp) : null;
             const dateStr = dt ? dt.toLocaleString('en-GB') : '—';
@@ -1154,12 +1255,12 @@
         }
 
         async function setIncidentStatus(id, status) {
-            // Optimistic update in allIncidents
+            // Optimistic update in both the full set and the currently visible (searched) set
             const inc = allIncidents.find(i => i.id === id);
             if (inc) inc.status = status;
             closeDrawer();
-            renderTable(allIncidents);
-            renderStats(allIncidents);
+            renderTable(visibleIncidents);
+            renderStats(visibleIncidents);
 
             // Persist via FastAPI (best-effort)
             try {
@@ -1185,6 +1286,7 @@
                 if (res.ok) {
                     const data = await res.json();
                     adminPhone = data.phone || '';
+                    isAdminMaster = data.is_master || false;
                     enterDashboard(data.name);
                 }
             } catch { /* show login */ }
