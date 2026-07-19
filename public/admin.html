@@ -836,6 +836,7 @@
         let allIncidents = [];
         let currentIncident = null;
         let adminPhone = ''; // static phone for the logged-in account, set on login / session restore
+        let isAdminMaster = false; // true if the logged-in admin is a master admin (can set password for any phone)
 
         // ── Auth Views
         function showLogin() {
@@ -929,6 +930,7 @@
                         sessionStorage.setItem(adminTokenKey, data.token);
                     }
                     adminPhone = data.phone || phone;
+                    isAdminMaster = data.is_master || false;
                     enterDashboard(data.name);
                 }
             } catch (err) {
