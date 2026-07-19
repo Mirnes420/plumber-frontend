@@ -1036,8 +1036,8 @@
             const params = new URLSearchParams();
             if (urgency !== 'ALL') params.set('urgency', urgency);
             if (status !== 'ALL') params.set('status', status);
-            if (from) params.set('from', from);
-            if (to) params.set('to', to);
+            if (from) params.set('from_date', from); 
+            if (to) params.set('to_date', to); 
 
             try {
                 const res = await fetch('/api/admin/incidents?' + params.toString(), {
