@@ -64,6 +64,14 @@ let currentQR = "";
 let sock = null;
 let isConnected = false;
 let pushName = "";
+let lastDisconnectGlobal = null;
+let lastErrorGlobal = null;
+
+// Reconnect / clear guard to avoid infinite clear-restart loops
+let clearAuthAttempts = 0;
+let lastClearTime = 0;
+const MAX_CLEAR_ATTEMPTS = 3;
+const CLEAR_ATTEMPT_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
 
 const logger = pino({ level: 'silent' });
 
@@ -175,7 +183,11 @@ async function getAuthStateStore() {
 }
 
 async function startSock() {
+    console.log('Starting WhatsApp socket (startSock) -- pid:', process.pid);
     const { state, saveCreds } = await getAuthStateStore();
+    console.log('Auth state present:', !!state?.creds);
+    const PRINT_QR = process.env.PRINT_QR_IN_TERMINAL === '1';
+    console.log('PRINT_QR_IN_TERMINAL=', PRINT_QR);
 
     // Dynamically fetch the latest supported web client version
     const { version, isLatest } = await fetchLatestWaWebVersion().catch(() => ({
@@ -189,15 +201,23 @@ async function startSock() {
         auth: state,
         version,
         browser: Browsers.macOS('Desktop'),
-        printQRInTerminal: false,
+        printQRInTerminal: PRINT_QR,
         logger: logger
     });
+
+    // Reset connection attempt tracking when we explicitly start a new socket
+    try {
+        if (Date.now() - lastClearTime > CLEAR_ATTEMPT_WINDOW_MS) {
+            clearAuthAttempts = 0;
+        }
+    } catch (e) { /* ignore */ }
 
     sock.ev.on('creds.update', saveCreds);
     // ... rest of your code
 
     sock.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect, qr } = update;
+        lastDisconnectGlobal = lastDisconnect || lastDisconnectGlobal;
         // Debug: log the full update so we can see when QR is emitted
         try {
             console.log('Baileys connection.update:', JSON.stringify(Object.keys(update).reduce((acc, k) => {
@@ -223,6 +243,7 @@ async function startSock() {
                     statusCode: lastDisconnect?.error?.output?.statusCode || null,
                     payload: lastDisconnect?.error?.output?.payload || null
                 }));
+                lastErrorGlobal = { msg: lastDisconnect?.error?.message || null, statusCode: lastDisconnect?.error?.output?.statusCode || null, payload: lastDisconnect?.error?.output?.payload || null };
             } catch (e) {
                 console.log('LastDisconnect (non-serializable):', lastDisconnect);
             }
@@ -231,8 +252,26 @@ async function startSock() {
 
             // If WA returned 428 (Precondition Required / Connection Terminated), clear saved auth and force a fresh login (QR)
             if (statusCode === 428) {
-                console.log('Detected 428 Connection Terminated — clearing saved auth state and forcing a fresh QR');
+                console.log('Detected 428 Connection Terminated — consider clearing saved auth and forcing a fresh QR');
                 currentQR = "";
+
+                const now = Date.now();
+                if (now - lastClearTime > CLEAR_ATTEMPT_WINDOW_MS) {
+                    clearAuthAttempts = 0;
+                }
+
+                if (clearAuthAttempts >= MAX_CLEAR_ATTEMPTS) {
+                    console.warn('Max auth-clear attempts reached. Backing off before next attempt.');
+                    // Back off for a longer period and then try once
+                    setTimeout(() => {
+                        clearAuthAttempts = 0;
+                        try { startSock(); } catch (e) { console.error('Restart after backoff failed:', e.message); }
+                    }, 30 * 60 * 1000); // 30 minutes
+                    return;
+                }
+
+                clearAuthAttempts += 1;
+                lastClearTime = now;
 
                 (async () => {
                     const KEY_PREFIX = process.env.BAILEYS_AUTH_PREFIX || 'baileys-service1:';
@@ -259,6 +298,11 @@ async function startSock() {
                     // give the underlying resources a moment to settle, then restart socket
                     setTimeout(() => {
                         try {
+                            // ensure previous socket is closed
+                            if (sock && sock.ev) {
+                                try { sock.ev.removeAllListeners(); } catch (e) {}
+                            }
+                            sock = null;
                             startSock();
                         } catch (e) {
                             console.error('Error restarting socket after clearing auth:', e.message);
@@ -328,6 +372,7 @@ async function startSock() {
                 });
             } catch (error) {
                 console.error(`Error forwarding to webhook. Is FastAPI running on ${FASTAPI_URL}?`, error.message);
+                lastErrorGlobal = { when: 'forward_webhook', err: error.message };
             }
         }
     });
@@ -393,6 +438,50 @@ app.get('/debug/qr', (req, res) => {
     console.log('Debug /debug/qr requested from', ip, 'isConnected=', isConnected, 'pushName=', pushName, 'currentQR_len=', currentQR ? currentQR.length : 0);
 
     return res.json({ currentQR: currentQR || null, isConnected, pushName });
+});
+
+// Diagnostic: test DNS resolution and TCP connect to web.whatsapp.com:443
+import dns from 'dns';
+import net from 'net';
+
+app.get('/debug/netcheck', async (req, res) => {
+    const host = 'web.whatsapp.com';
+    const port = 443;
+    const result = { host, port };
+    try {
+        const lookup = await new Promise((resolve, reject) => {
+            dns.lookup(host, (err, address, family) => {
+                if (err) return reject(err);
+                resolve({ address, family });
+            });
+        });
+        result.dns = lookup;
+    } catch (err) {
+        result.dnsError = err.message;
+    }
+
+    // try TCP connect
+    try {
+        const sockTest = new net.Socket();
+        const timeoutMs = 5000;
+        const tcpRes = await new Promise((resolve, reject) => {
+            let settled = false;
+            sockTest.setTimeout(timeoutMs);
+            sockTest.once('connect', () => { settled = true; sockTest.destroy(); resolve({ ok: true }); });
+            sockTest.once('timeout', () => { if (!settled) { settled = true; sockTest.destroy(); reject(new Error('timeout')); } });
+            sockTest.once('error', (e) => { if (!settled) { settled = true; reject(e); } });
+            sockTest.connect(port, host);
+        });
+        result.tcp = tcpRes;
+    } catch (err) {
+        result.tcpError = err.message;
+    }
+
+    res.json(result);
+});
+
+app.get('/debug/last-disconnect', (req, res) => {
+    res.json({ lastDisconnect: lastDisconnectGlobal, lastError: lastErrorGlobal });
 });
 
 // Web interface to scan the QR Code from the cloud!
