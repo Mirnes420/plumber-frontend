@@ -9,6 +9,7 @@ import pg from 'pg';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
+import fs from 'fs';
 
 // ── Load env FIRST before reading any process.env values ──
 dotenv.config({ path: '../.env' });
@@ -214,8 +215,62 @@ async function startSock() {
         if (connection === 'close') {
             isConnected = false;
             pushName = "";
-            const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;
-            console.log('Connection closed due to ', lastDisconnect.error, ', reconnecting: ', shouldReconnect);
+
+            // Log detailed disconnect info
+            try {
+                console.log('LastDisconnect details:', JSON.stringify({
+                    msg: lastDisconnect?.error?.message || lastDisconnect?.error || null,
+                    statusCode: lastDisconnect?.error?.output?.statusCode || null,
+                    payload: lastDisconnect?.error?.output?.payload || null
+                }));
+            } catch (e) {
+                console.log('LastDisconnect (non-serializable):', lastDisconnect);
+            }
+
+            const statusCode = lastDisconnect?.error?.output?.statusCode;
+
+            // If WA returned 428 (Precondition Required / Connection Terminated), clear saved auth and force a fresh login (QR)
+            if (statusCode === 428) {
+                console.log('Detected 428 Connection Terminated — clearing saved auth state and forcing a fresh QR');
+                currentQR = "";
+
+                (async () => {
+                    const KEY_PREFIX = process.env.BAILEYS_AUTH_PREFIX || 'baileys-service1:';
+                    if (process.env.DATABASE_URL) {
+                        const pool = getDbPool();
+                        if (pool) {
+                            try {
+                                await pool.query('DELETE FROM whatsapp_auth_store WHERE key LIKE $1', [KEY_PREFIX + '%']);
+                                console.log('Cleared whatsapp_auth_store rows with prefix', KEY_PREFIX);
+                            } catch (err) {
+                                console.error('Error clearing whatsapp_auth_store:', err.message);
+                            }
+                        }
+                    } else {
+                        const authDir = process.env.DATA_PATH || './.baileys_auth';
+                        try {
+                            fs.rmSync(authDir, { recursive: true, force: true });
+                            console.log('Removed local auth folder', authDir);
+                        } catch (err) {
+                            console.error('Error removing local auth folder:', err.message);
+                        }
+                    }
+
+                    // give the underlying resources a moment to settle, then restart socket
+                    setTimeout(() => {
+                        try {
+                            startSock();
+                        } catch (e) {
+                            console.error('Error restarting socket after clearing auth:', e.message);
+                        }
+                    }, 1500);
+                })();
+
+                return;
+            }
+
+            const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+            console.log('Connection closed due to ', lastDisconnect?.error, ', reconnecting: ', shouldReconnect);
             if (shouldReconnect) {
                 setTimeout(startSock, 5000); // Reconnect after 5 seconds
             }
