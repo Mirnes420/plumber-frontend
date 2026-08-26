@@ -1,5 +1,5 @@
 import express from 'express';
-import makeWASocket, { useMultiFileAuthState, DisconnectReason, BufferJSON, initAuthCreds } from '@whiskeysockets/baileys';
+import makeWASocket, { useMultiFileAuthState, DisconnectReason, BufferJSON, initAuthCreds, Browsers } from '@whiskeysockets/baileys';
 import pino from 'pino';
 import multer from 'multer';
 import path from 'path';
@@ -75,6 +75,9 @@ async function getAuthStateStore() {
     try {
         const pool = getDbPool();
 
+        // Use an isolated namespace prefix to avoid multi-service session collisions
+        const KEY_PREFIX = process.env.BAILEYS_AUTH_PREFIX || 'baileys-service1:';
+
         // Ensure table exists
         await pool.query(`
             CREATE TABLE IF NOT EXISTS whatsapp_auth_store (
@@ -85,7 +88,8 @@ async function getAuthStateStore() {
 
         const readData = async (key) => {
             try {
-                const res = await pool.query('SELECT value FROM whatsapp_auth_store WHERE key = $1', [key]);
+                const fullKey = `${KEY_PREFIX}${key}`;
+                const res = await pool.query('SELECT value FROM whatsapp_auth_store WHERE key = $1', [fullKey]);
                 if (res.rows.length > 0) {
                     return JSON.parse(res.rows[0].value, BufferJSON.reviver);
                 }
@@ -97,12 +101,13 @@ async function getAuthStateStore() {
 
         const writeData = async (key, value) => {
             try {
+                const fullKey = `${KEY_PREFIX}${key}`;
                 const serialized = JSON.stringify(value, BufferJSON.replacer);
                 await pool.query(`
                     INSERT INTO whatsapp_auth_store (key, value)
                     VALUES ($1, $2)
                     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
-                `, [key, serialized]);
+                `, [fullKey, serialized]);
             } catch (err) {
                 console.error(`DB write error for key ${key}:`, err.message);
             }
@@ -110,7 +115,8 @@ async function getAuthStateStore() {
 
         const deleteData = async (key) => {
             try {
-                await pool.query('DELETE FROM whatsapp_auth_store WHERE key = $1', [key]);
+                const fullKey = `${KEY_PREFIX}${key}`;
+                await pool.query('DELETE FROM whatsapp_auth_store WHERE key = $1', [fullKey]);
             } catch (err) {
                 console.error(`DB delete error for key ${key}:`, err.message);
             }
@@ -172,6 +178,9 @@ async function startSock() {
 
     sock = makeWASocket({
         auth: state,
+        // Override Baileys version & browser info to prevent 405 Method Not Allowed handshake rejections
+        version: [2, 3000, 1017531287],
+        browser: Browsers.macOS('Desktop'),
         printQRInTerminal: false,
         logger: logger
     });
@@ -402,7 +411,6 @@ app.post('/send', async (req, res) => {
     try {
         const { number, text, imageUrl, caption, buttons, demo } = req.body;
 
-
         if (!number) {
             return res.status(400).json({ error: 'Number is required (e.g. +385919293138 or "me")' });
         }
@@ -471,7 +479,7 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
         // Handle Quick Demo Mode Bypass directly inside Express
         if (demo === 'true' || demo === true) {
             console.log(`🚀 Demo Mode Active: Intercepting request and mock-paging provider directly via WhatsApp`);
-            
+
             if (!isConnected || !sock) {
                 return res.status(503).json({ error: 'WhatsApp client is not connected' });
             }
@@ -482,15 +490,15 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
 
             // Constructing a simulated real-world AI payload structure
             const mockAlertText = `🚨 *NEW EMERGENCY DISPATCH* 🚨\n\n` +
-                                  `👤 *Customer:* ${customer_name || 'John Doe'}\n` +
-                                  `📍 *Location:* ${location || '123 Main Street, Unit 4B'}\n` +
-                                  `🛠️ *Trade Required:* ${typeUpper}\n\n` +
-                                  `📋 *AI Incident Diagnosis:* ${description || 'System failure needing immediate dispatch.'}\n\n` +
-                                  `⚡ *Action Required:* Please reply to this message immediately to confirm availability.`;
+                `👤 *Customer:* ${customer_name || 'John Doe'}\n` +
+                `📍 *Location:* ${location || '123 Main Street, Unit 4B'}\n` +
+                `🛠️ *Trade Required:* ${typeUpper}\n\n` +
+                `📋 *AI Incident Diagnosis:* ${description || 'System failure needing immediate dispatch.'}\n\n` +
+                `⚡ *Action Required:* Please reply to this message immediately to confirm availability.`;
 
             await sock.sendMessage(chatId, { text: mockAlertText });
             console.log(`✅ Demo dispatch message successfully pushed to mock provider: ${chatId}`);
-            
+
             return res.json({ success: true, demo: true, message: 'Demo request simulated successfully!' });
         }
 
@@ -498,7 +506,7 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
         const formData = new FormData();
         formData.append('phone', phone);
         formData.append('description', description);
-        
+
         if (location) formData.append('location', location);
         if (customer_name) formData.append('customer_name', customer_name);
         if (plumber_id) formData.append('plumber_id', plumber_id);
@@ -548,7 +556,6 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
 
 // ==========================================================================
 // ADMIN DASHBOARD PROXY ROUTES (Forward to FastAPI Backend)
