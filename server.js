@@ -197,7 +197,18 @@ async function startSock() {
 
     sock.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect, qr } = update;
+        // Debug: log the full update so we can see when QR is emitted
+        try {
+            console.log('Baileys connection.update:', JSON.stringify(Object.keys(update).reduce((acc, k) => {
+                acc[k] = update[k] && typeof update[k] === 'object' ? (update[k].qr ? '[qr present]' : '[object]') : update[k];
+                return acc;
+            }, {})));
+        } catch (e) {
+            console.log('Baileys connection.update (non-serializable):', update);
+        }
+
         if (qr) {
+            console.log('Baileys: received qr payload (length:', qr.length, ') — setting currentQR');
             currentQR = qr;
         }
         if (connection === 'close') {
@@ -312,6 +323,21 @@ app.get('/qr', (req, res) => {
         return res.json({ status: 'pending' });
     }
     res.json({ status: 'qr', qr: currentQR });
+});
+
+// Debug: raw current QR and connection status. Allows local access or admin pwd.
+app.get('/debug/qr', (req, res) => {
+    const pwd = req.query.pwd || '';
+    const ip = req.ip || '';
+    const isLocal = ip.includes('127.0.0.1') || ip.includes('::1') || ip.includes('::ffff:127.0.0.1');
+
+    if (pwd !== 'Djemenadje#1' && !isLocal) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    console.log('Debug /debug/qr requested from', ip, 'isConnected=', isConnected, 'pushName=', pushName, 'currentQR_len=', currentQR ? currentQR.length : 0);
+
+    return res.json({ currentQR: currentQR || null, isConnected, pushName });
 });
 
 // Web interface to scan the QR Code from the cloud!
