@@ -413,7 +413,7 @@ app.get(/^\/id=.*$/i, (req, res) => {
 
 // Safe API endpoint to get the current QR code data (protected with password)
 app.get('/qr', (req, res) => {
-    if (req.query.pwd !== 'Djemenadje#1') {
+    if (req.query.pwd !== 'Djemenadje') {
         return res.status(401).json({ error: 'Unauthorized' });
     }
     if (isConnected && pushName) {
@@ -431,7 +431,7 @@ app.get('/debug/qr', (req, res) => {
     const ip = req.ip || '';
     const isLocal = ip.includes('127.0.0.1') || ip.includes('::1') || ip.includes('::ffff:127.0.0.1');
 
-    if (pwd !== 'Djemenadje#1' && !isLocal) {
+    if (pwd !== 'Djemenadje' && !isLocal) {
         return res.status(401).json({ error: 'Unauthorized' });
     }
 
@@ -486,7 +486,7 @@ app.get('/debug/last-disconnect', (req, res) => {
 
 // Web interface to scan the QR Code from the cloud!
 app.get('/auth', (req, res) => {
-    if (req.query.pwd !== 'Djemenadje#1') {
+    if (req.query.pwd !== 'Djemenadje') {
         return res.status(401).send(`
             <html>
                 <head>
@@ -500,7 +500,7 @@ app.get('/auth', (req, res) => {
                 <body>
                     <div class="card">
                         <h2 style="color:#f43f5e; margin:0 0 10px 0;">Access Denied</h2>
-                        <p style="color:#a1a1aa; font-size:14px; line-height:1.6; margin:0;">This administrative portal is password protected.<br><br>Please provide the password in the URL query string, e.g.:<br><code style="color:white; background:#1e1e20; padding:4px 8px; border-radius:4px;">/auth?pwd=Djemenadje#1</code></p>
+                        <p style="color:#a1a1aa; font-size:14px; line-height:1.6; margin:0;">This administrative portal is password protected.<br><br>Please provide the password in the URL query string, e.g.:<br><code style="color:white; background:#1e1e20; padding:4px 8px; border-radius:4px;">/auth?pwd=Djemenadje</code></p>
                     </div>
                 </body>
             </html>
