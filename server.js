@@ -1,5 +1,5 @@
 import express from 'express';
-import makeWASocket, { useMultiFileAuthState, DisconnectReason, BufferJSON, initAuthCreds, Browsers } from '@whiskeysockets/baileys';
+import makeWASocket, { useMultiFileAuthState, DisconnectReason, BufferJSON, initAuthCreds, Browsers, fetchLatestWaWebVersion } from '@whiskeysockets/baileys';
 import pino from 'pino';
 import multer from 'multer';
 import path from 'path';
@@ -176,16 +176,24 @@ async function getAuthStateStore() {
 async function startSock() {
     const { state, saveCreds } = await getAuthStateStore();
 
+    // Dynamically fetch the latest supported web client version
+    const { version, isLatest } = await fetchLatestWaWebVersion().catch(() => ({
+        version: [2, 3000, 1017531287], // Fallback if fetch fails
+        isLatest: false
+    }));
+
+    console.log(`Using WA Web version v${version.join('.')}, isLatest: ${isLatest}`);
+
     sock = makeWASocket({
         auth: state,
-        // Override Baileys version & browser info to prevent 405 Method Not Allowed handshake rejections
-        version: [2, 3000, 1017531287],
+        version,
         browser: Browsers.macOS('Desktop'),
         printQRInTerminal: false,
         logger: logger
     });
 
     sock.ev.on('creds.update', saveCreds);
+    // ... rest of your code
 
     sock.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect, qr } = update;
