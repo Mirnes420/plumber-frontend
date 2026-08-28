@@ -87,6 +87,8 @@ async function getAuthStateStore() {
         // Use an isolated namespace prefix to avoid multi-service session collisions
         const KEY_PREFIX = process.env.BAILEYS_AUTH_PREFIX || 'baileys-service1:';
 
+        console.log(`🔑 Baileys auth prefix: "${KEY_PREFIX}"${process.env.BAILEYS_AUTH_PREFIX ? '' : ' (⚠️ using DEFAULT — set BAILEYS_AUTH_PREFIX per service!)'}`);
+
         // Ensure table exists
         await pool.query(`
             CREATE TABLE IF NOT EXISTS whatsapp_auth_store (
@@ -274,41 +276,32 @@ async function startSock() {
                 lastClearTime = now;
 
                 (async () => {
-                    const KEY_PREFIX = process.env.BAILEYS_AUTH_PREFIX || 'baileys-service1:';
-                    if (process.env.DATABASE_URL) {
-                        const pool = getDbPool();
-                        if (pool) {
-                            try {
-                                await pool.query('DELETE FROM whatsapp_auth_store WHERE key LIKE $1', [KEY_PREFIX + '%']);
-                                console.log('Cleared whatsapp_auth_store rows with prefix', KEY_PREFIX);
-                            } catch (err) {
-                                console.error('Error clearing whatsapp_auth_store:', err.message);
-                            }
-                        }
-                    } else {
-                        const authDir = process.env.DATA_PATH || './.baileys_auth';
+                // Kill the dying socket's listeners FIRST so its creds.update can't resurrect rows mid-clear
+                if (sock && sock.ev) {
+                    try { sock.ev.removeAllListeners(); } catch (e) {}
+                }
+                const deadSock = sock;
+                sock = null;
+                if (deadSock?.ws) { try { deadSock.ws.close(); } catch (e) {} }
+
+                const KEY_PREFIX = process.env.BAILEYS_AUTH_PREFIX || 'baileys-service1:';
+                if (process.env.DATABASE_URL) {
+                    const pool = getDbPool();
+                    if (pool) {
                         try {
-                            fs.rmSync(authDir, { recursive: true, force: true });
-                            console.log('Removed local auth folder', authDir);
+                            await pool.query('DELETE FROM whatsapp_auth_store WHERE key LIKE $1', [KEY_PREFIX + '%']);
+                            console.log('Cleared whatsapp_auth_store rows with prefix', KEY_PREFIX);
                         } catch (err) {
-                            console.error('Error removing local auth folder:', err.message);
+                            console.error('Error clearing whatsapp_auth_store:', err.message);
                         }
                     }
+                } else {
+                    const authDir = process.env.DATA_PATH || './.baileys_auth';
+                    try { fs.rmSync(authDir, { recursive: true, force: true }); } catch (err) {}
+                }
 
-                    // give the underlying resources a moment to settle, then restart socket
-                    setTimeout(() => {
-                        try {
-                            // ensure previous socket is closed
-                            if (sock && sock.ev) {
-                                try { sock.ev.removeAllListeners(); } catch (e) {}
-                            }
-                            sock = null;
-                            startSock();
-                        } catch (e) {
-                            console.error('Error restarting socket after clearing auth:', e.message);
-                        }
-                    }, 1500);
-                })();
+                setTimeout(() => { startSock(); }, 1500);
+            })();
 
                 return;
             }
