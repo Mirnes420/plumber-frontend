@@ -103,10 +103,7 @@ const globalSendHistory = []; // timestamps of recent sends
 const GLOBAL_SEND_FLOOD_LIMIT = 10;
 const GLOBAL_SEND_FLOOD_WINDOW_MS = 10000; // 10 seconds
 
-// CRITICAL: Demo lock. When a demo submission hits /submit-form, we lock /send
-// for a short window so FastAPI cannot spam real alerts even if it tries.
-let demoLockUntil = 0;
-const DEMO_LOCK_MS = 30000; // 30 seconds
+// Demo lock removed — demo submissions no longer block or lock /send.
 
 setInterval(() => {
     const cutoff = Date.now() - SEND_DEDUP_WINDOW_MS;
@@ -688,13 +685,7 @@ app.post('/send', async (req, res) => {
             chatId = `${cleanNumber}@s.whatsapp.net`;
         }
 
-        // ── DEMO LOCK GUARD ──
-        // If a demo request was recently submitted, block all real backend sends.
-        if (Date.now() < demoLockUntil) {
-            const remaining = Math.ceil((demoLockUntil - Date.now()) / 1000);
-            console.warn(`🚫 DEMO LOCK ACTIVE: Rejected send to ${chatId} from ${callerIp}. Lock expires in ${remaining}s.`);
-            return res.status(503).json({ error: `Demo mode lock active. Real sends are disabled for ${remaining}s.` });
-        }
+        // Demo lock guard removed: allow sends to proceed normally.
 
         // ── EMERGENCY PATTERN BLOCK (last-resort safety net) ──
         // If FastAPI somehow still tries to dispatch real alerts, block them by content.
@@ -794,36 +785,9 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
         const isDemo = String(demo).toLowerCase() === 'true' || String(demo) === '1' || demo === true || String(demo).toLowerCase() === 'on';
         console.log(`🌐 Received web form from ${customer_name || 'Unknown'} (${phone}) [Plumber ID: ${plumber_id || 'None'} | Type: ${professional_type || 'plumber'} | Demo: ${demo} (resolved=${isDemo})]`);
 
-        // CRITICAL: Activate demo lock so /send rejects real backend traffic for 30s
+        // Demo flag present: we log it but do NOT activate locks or auto-send demo WhatsApp messages.
         if (isDemo) {
-            demoLockUntil = Date.now() + DEMO_LOCK_MS;
-            console.log(`🔒 Demo lock activated until ${new Date(demoLockUntil).toISOString()}`);
-        }
-
-        // Handle Quick Demo Mode Bypass directly inside Express
-        if (isDemo) {
-            console.log(`🚀 Demo Mode Active: Intercepting request and mock-paging provider directly via WhatsApp`);
-
-            if (!isConnected || !sock) {
-                return res.status(503).json({ error: 'WhatsApp client is not connected' });
-            }
-
-            const cleanNumber = phone.replace(/[^0-9]/g, "");
-            const chatId = `${cleanNumber}@s.whatsapp.net`;
-            const typeUpper = (professional_type || 'plumber').toUpperCase();
-
-            // Constructing a simulated real-world AI payload structure
-            const mockAlertText = `🚨 *NEW EMERGENCY DISPATCH* 🚨\n\n` +
-                `👤 *Customer:* ${customer_name || 'John Doe'}\n` +
-                `📍 *Location:* ${location || '123 Main Street, Unit 4B'}\n` +
-                `🛠️ *Trade Required:* ${typeUpper}\n\n` +
-                `📋 *AI Incident Diagnosis:* ${description || 'System failure needing immediate dispatch.'}\n\n` +
-                `⚡ *Action Required:* Please reply to this message immediately to confirm availability.`;
-
-            await sock.sendMessage(chatId, { text: mockAlertText });
-            console.log(`✅ Demo dispatch message successfully pushed to mock provider: ${chatId}`);
-
-            return res.json({ success: true, demo: true, message: 'Demo request simulated successfully!' });
+            console.log('⚠️ Demo submission received — demo behavior suppressed (no auto-send, no lock).');
         }
 
         // ─── Normal Non-Demo Path continues here ───────────────────────────
