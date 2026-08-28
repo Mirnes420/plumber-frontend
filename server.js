@@ -78,14 +78,15 @@ const logger = pino({ level: 'silent' });
 async function getAuthStateStore() {
     if (!process.env.DATABASE_URL) {
         console.log("⚠️ DATABASE_URL not set in .env. Falling back to local MultiFileAuth...");
-        return useMultiFileAuthState(process.env.DATA_PATH || './.baileys_auth');
+        return useMultiFileAuthState(process.env.DATA_PATH || './.baileys_auth_coherzo');
     }
 
     try {
         const pool = getDbPool();
 
-        // Use an isolated namespace prefix to avoid multi-service session collisions
-        const KEY_PREFIX = process.env.BAILEYS_AUTH_PREFIX || 'baileys-service1:';
+        // Hardcoded, service-specific namespace — safe even if BAILEYS_AUTH_PREFIX
+        // is never set in Render's env. Never reuse this literal in another service.
+        const KEY_PREFIX = process.env.BAILEYS_AUTH_PREFIX || 'coherzo:';
 
         console.log(`🔑 Baileys auth prefix: "${KEY_PREFIX}"${process.env.BAILEYS_AUTH_PREFIX ? '' : ' (⚠️ using DEFAULT — set BAILEYS_AUTH_PREFIX per service!)'}`);
 
@@ -180,7 +181,7 @@ async function getAuthStateStore() {
     } catch (err) {
         console.error("❌ Postgres Auth Store failed to initialize:", err.message);
         console.log("Falling back to local MultiFileAuth...");
-        return useMultiFileAuthState(process.env.DATA_PATH || './.baileys_auth');
+        return useMultiFileAuthState(process.env.DATA_PATH || './.baileys_auth_coherzo');
     }
 }
 
@@ -202,7 +203,9 @@ async function startSock() {
     sock = makeWASocket({
         auth: state,
         version,
-        browser: Browsers.macOS('Desktop'),
+        // Distinct label so this shows up clearly as "Coherzo" in WhatsApp's
+        // Linked Devices list, instead of an unlabeled/generic "Mac OS Desktop".
+        browser: Browsers.macOS('Coherzo'),
         printQRInTerminal: PRINT_QR,
         logger: logger
     });
@@ -284,7 +287,9 @@ async function startSock() {
                 sock = null;
                 if (deadSock?.ws) { try { deadSock.ws.close(); } catch (e) {} }
 
-                const KEY_PREFIX = process.env.BAILEYS_AUTH_PREFIX || 'baileys-service1:';
+                // Must match the prefix used in getAuthStateStore() above, or this
+                // clear becomes a no-op against the wrong rows.
+                const KEY_PREFIX = process.env.BAILEYS_AUTH_PREFIX || 'coherzo:';
                 if (process.env.DATABASE_URL) {
                     const pool = getDbPool();
                     if (pool) {
@@ -296,7 +301,7 @@ async function startSock() {
                         }
                     }
                 } else {
-                    const authDir = process.env.DATA_PATH || './.baileys_auth';
+                    const authDir = process.env.DATA_PATH || './.baileys_auth_coherzo';
                     try { fs.rmSync(authDir, { recursive: true, force: true }); } catch (err) {}
                 }
 
