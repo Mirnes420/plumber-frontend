@@ -66,6 +66,7 @@ let isConnected = false;
 let pushName = "";
 let lastDisconnectGlobal = null;
 let lastErrorGlobal = null;
+let isStartingSock = false; // CRITICAL FIX: prevent concurrent socket creation
 
 // Reconnect / clear guard to avoid infinite clear-restart loops
 let clearAuthAttempts = 0;
@@ -186,194 +187,216 @@ async function getAuthStateStore() {
 }
 
 async function startSock() {
+    if (isStartingSock) {
+        console.log('startSock already in progress, skipping duplicate...');
+        return;
+    }
+    if (sock?.ws && isConnected) {
+        console.log('Socket already connected, skipping startSock.');
+        return;
+    }
+
+    isStartingSock = true;
     console.log('Starting WhatsApp socket (startSock) -- pid:', process.pid);
-    const { state, saveCreds } = await getAuthStateStore();
-    console.log('Auth state present:', !!state?.creds);
-    const PRINT_QR = process.env.PRINT_QR_IN_TERMINAL === '1';
-    console.log('PRINT_QR_IN_TERMINAL=', PRINT_QR);
 
-    // Dynamically fetch the latest supported web client version
-    const { version, isLatest } = await fetchLatestWaWebVersion().catch(() => ({
-        version: [2, 3000, 1017531287], // Fallback if fetch fails
-        isLatest: false
-    }));
-
-    console.log(`Using WA Web version v${version.join('.')}, isLatest: ${isLatest}`);
-
-    sock = makeWASocket({
-        auth: state,
-        version,
-        // Distinct label so this shows up clearly as "Coherzo" in WhatsApp's
-        // Linked Devices list, instead of an unlabeled/generic "Mac OS Desktop".
-        browser: Browsers.macOS('Coherzo'),
-        printQRInTerminal: PRINT_QR,
-        logger: logger
-    });
-
-    // Reset connection attempt tracking when we explicitly start a new socket
     try {
-        if (Date.now() - lastClearTime > CLEAR_ATTEMPT_WINDOW_MS) {
-            clearAuthAttempts = 0;
-        }
-    } catch (e) { /* ignore */ }
+        const { state, saveCreds } = await getAuthStateStore();
+        console.log('Auth state present:', !!state?.creds);
+        const PRINT_QR = process.env.PRINT_QR_IN_TERMINAL === '1';
+        console.log('PRINT_QR_IN_TERMINAL=', PRINT_QR);
 
-    sock.ev.on('creds.update', saveCreds);
-    // ... rest of your code
+        // Dynamically fetch the latest supported web client version
+        const { version, isLatest } = await fetchLatestWaWebVersion().catch(() => ({
+            version: [2, 3000, 1017531287], // Fallback if fetch fails
+            isLatest: false
+        }));
 
-    sock.ev.on('connection.update', (update) => {
-        const { connection, lastDisconnect, qr } = update;
-        lastDisconnectGlobal = lastDisconnect || lastDisconnectGlobal;
-        // Debug: log the full update so we can see when QR is emitted
+        console.log(`Using WA Web version v${version.join('.')}, isLatest: ${isLatest}`);
+
+        sock = makeWASocket({
+            auth: state,
+            version,
+            // Distinct label so this shows up clearly as "Coherzo" in WhatsApp's
+            // Linked Devices list, instead of an unlabeled/generic "Mac OS Desktop".
+            browser: Browsers.macOS('Coherzo'),
+            printQRInTerminal: PRINT_QR,
+            logger: logger
+        });
+
+        // Reset connection attempt tracking when we explicitly start a new socket
         try {
-            console.log('Baileys connection.update:', JSON.stringify(Object.keys(update).reduce((acc, k) => {
-                acc[k] = update[k] && typeof update[k] === 'object' ? (update[k].qr ? '[qr present]' : '[object]') : update[k];
-                return acc;
-            }, {})));
-        } catch (e) {
-            console.log('Baileys connection.update (non-serializable):', update);
-        }
+            if (Date.now() - lastClearTime > CLEAR_ATTEMPT_WINDOW_MS) {
+                clearAuthAttempts = 0;
+            }
+        } catch (e) { /* ignore */ }
 
-        if (qr) {
-            console.log('Baileys: received qr payload (length:', qr.length, ') — setting currentQR');
-            currentQR = qr;
-        }
-        if (connection === 'close') {
-            isConnected = false;
-            pushName = "";
+        sock.ev.on('creds.update', saveCreds);
+        // ... rest of your code
 
-            // Log detailed disconnect info
+        sock.ev.on('connection.update', (update) => {
+            const { connection, lastDisconnect, qr } = update;
+            lastDisconnectGlobal = lastDisconnect || lastDisconnectGlobal;
+            // Debug: log the full update so we can see when QR is emitted
             try {
-                console.log('LastDisconnect details:', JSON.stringify({
-                    msg: lastDisconnect?.error?.message || lastDisconnect?.error || null,
-                    statusCode: lastDisconnect?.error?.output?.statusCode || null,
-                    payload: lastDisconnect?.error?.output?.payload || null
-                }));
-                lastErrorGlobal = { msg: lastDisconnect?.error?.message || null, statusCode: lastDisconnect?.error?.output?.statusCode || null, payload: lastDisconnect?.error?.output?.payload || null };
+                console.log('Baileys connection.update:', JSON.stringify(Object.keys(update).reduce((acc, k) => {
+                    acc[k] = update[k] && typeof update[k] === 'object' ? (update[k].qr ? '[qr present]' : '[object]') : update[k];
+                    return acc;
+                }, {})));
             } catch (e) {
-                console.log('LastDisconnect (non-serializable):', lastDisconnect);
+                console.log('Baileys connection.update (non-serializable):', update);
             }
 
-            const statusCode = lastDisconnect?.error?.output?.statusCode;
+            if (qr) {
+                console.log('Baileys: received qr payload (length:', qr.length, ') — setting currentQR');
+                currentQR = qr;
+            }
+            if (connection === 'close') {
+                isConnected = false;
+                pushName = "";
 
-            // If WA returned 428 (Precondition Required / Connection Terminated), clear saved auth and force a fresh login (QR)
-            if (statusCode === 428) {
-                console.log('Detected 428 Connection Terminated — consider clearing saved auth and forcing a fresh QR');
-                currentQR = "";
-
-                const now = Date.now();
-                if (now - lastClearTime > CLEAR_ATTEMPT_WINDOW_MS) {
-                    clearAuthAttempts = 0;
-                }
-
-                if (clearAuthAttempts >= MAX_CLEAR_ATTEMPTS) {
-                    console.warn('Max auth-clear attempts reached. Backing off before next attempt.');
-                    // Back off for a longer period and then try once
-                    setTimeout(() => {
-                        clearAuthAttempts = 0;
-                        try { startSock(); } catch (e) { console.error('Restart after backoff failed:', e.message); }
-                    }, 30 * 60 * 1000); // 30 minutes
-                    return;
-                }
-
-                clearAuthAttempts += 1;
-                lastClearTime = now;
-
-                (async () => {
-                // Kill the dying socket's listeners FIRST so its creds.update can't resurrect rows mid-clear
+                // CRITICAL FIX: Remove listeners from the dying socket so it
+                // doesn't keep firing messages.upsert while we reconnect.
                 if (sock && sock.ev) {
                     try { sock.ev.removeAllListeners(); } catch (e) {}
                 }
-                const deadSock = sock;
-                sock = null;
-                if (deadSock?.ws) { try { deadSock.ws.close(); } catch (e) {} }
 
-                // Must match the prefix used in getAuthStateStore() above, or this
-                // clear becomes a no-op against the wrong rows.
-                const KEY_PREFIX = process.env.BAILEYS_AUTH_PREFIX || 'coherzo:';
-                if (process.env.DATABASE_URL) {
-                    const pool = getDbPool();
-                    if (pool) {
-                        try {
-                            await pool.query('DELETE FROM whatsapp_auth_store WHERE key LIKE $1', [KEY_PREFIX + '%']);
-                            console.log('Cleared whatsapp_auth_store rows with prefix', KEY_PREFIX);
-                        } catch (err) {
-                            console.error('Error clearing whatsapp_auth_store:', err.message);
-                        }
-                    }
-                } else {
-                    const authDir = process.env.DATA_PATH || './.baileys_auth_coherzo';
-                    try { fs.rmSync(authDir, { recursive: true, force: true }); } catch (err) {}
+                // Log detailed disconnect info
+                try {
+                    console.log('LastDisconnect details:', JSON.stringify({
+                        msg: lastDisconnect?.error?.message || lastDisconnect?.error || null,
+                        statusCode: lastDisconnect?.error?.output?.statusCode || null,
+                        payload: lastDisconnect?.error?.output?.payload || null
+                    }));
+                    lastErrorGlobal = { msg: lastDisconnect?.error?.message || null, statusCode: lastDisconnect?.error?.output?.statusCode || null, payload: lastDisconnect?.error?.output?.payload || null };
+                } catch (e) {
+                    console.log('LastDisconnect (non-serializable):', lastDisconnect);
                 }
 
-                setTimeout(() => { startSock(); }, 1500);
-            })();
+                const statusCode = lastDisconnect?.error?.output?.statusCode;
 
-                return;
+                // If WA returned 428 (Precondition Required / Connection Terminated), clear saved auth and force a fresh login (QR)
+                if (statusCode === 428) {
+                    console.log('Detected 428 Connection Terminated — consider clearing saved auth and forcing a fresh QR');
+                    currentQR = "";
+
+                    const now = Date.now();
+                    if (now - lastClearTime > CLEAR_ATTEMPT_WINDOW_MS) {
+                        clearAuthAttempts = 0;
+                    }
+
+                    if (clearAuthAttempts >= MAX_CLEAR_ATTEMPTS) {
+                        console.warn('Max auth-clear attempts reached. Backing off before next attempt.');
+                        // Back off for a longer period and then try once
+                        setTimeout(() => {
+                            clearAuthAttempts = 0;
+                            try { startSock(); } catch (e) { console.error('Restart after backoff failed:', e.message); }
+                        }, 30 * 60 * 1000); // 30 minutes
+                        return;
+                    }
+
+                    clearAuthAttempts += 1;
+                    lastClearTime = now;
+
+                    (async () => {
+                    // Kill the dying socket's listeners FIRST so its creds.update can't resurrect rows mid-clear
+                    if (sock && sock.ev) {
+                        try { sock.ev.removeAllListeners(); } catch (e) {}
+                    }
+                    const deadSock = sock;
+                    sock = null;
+                    if (deadSock?.ws) { try { deadSock.ws.close(); } catch (e) {} }
+
+                    // Must match the prefix used in getAuthStateStore() above, or this
+                    // clear becomes a no-op against the wrong rows.
+                    const KEY_PREFIX = process.env.BAILEYS_AUTH_PREFIX || 'coherzo:';
+                    if (process.env.DATABASE_URL) {
+                        const pool = getDbPool();
+                        if (pool) {
+                            try {
+                                await pool.query('DELETE FROM whatsapp_auth_store WHERE key LIKE $1', [KEY_PREFIX + '%']);
+                                console.log('Cleared whatsapp_auth_store rows with prefix', KEY_PREFIX);
+                            } catch (err) {
+                                console.error('Error clearing whatsapp_auth_store:', err.message);
+                            }
+                        }
+                    } else {
+                        const authDir = process.env.DATA_PATH || './.baileys_auth_coherzo';
+                        try { fs.rmSync(authDir, { recursive: true, force: true }); } catch (err) {}
+                    }
+
+                    setTimeout(() => { startSock(); }, 1500);
+                })();
+
+                    return;
+                }
+
+                const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+                console.log('Connection closed due to ', lastDisconnect?.error, ', reconnecting: ', shouldReconnect);
+                if (shouldReconnect) {
+                    setTimeout(startSock, 5000); // Reconnect after 5 seconds
+                }
+            } else if (connection === 'open') {
+                console.log('✅ Baileys: WhatsApp connection opened successfully!');
+                isConnected = true;
+                currentQR = "";
+                pushName = sock.user.name || "Admin/Plumber";
             }
+        });
 
-            const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-            console.log('Connection closed due to ', lastDisconnect?.error, ', reconnecting: ', shouldReconnect);
-            if (shouldReconnect) {
-                setTimeout(startSock, 5000); // Reconnect after 5 seconds
-            }
-        } else if (connection === 'open') {
-            console.log('✅ Baileys: WhatsApp connection opened successfully!');
-            isConnected = true;
-            currentQR = "";
-            pushName = sock.user.name || "Admin/Plumber";
-        }
-    });
+        sock.ev.on('messages.upsert', async (m) => {
+            if (m.type !== 'notify') return;
+            for (const msg of m.messages) {
+                if (!msg.message) continue;
 
-    sock.ev.on('messages.upsert', async (m) => {
-        if (m.type !== 'notify') return;
-        for (const msg of m.messages) {
-            if (!msg.message) continue;
+                const from = msg.key.remoteJid;
+                const fromMe = msg.key.fromMe;
 
-            const from = msg.key.remoteJid;
-            const fromMe = msg.key.fromMe;
+                // Get text content safely
+                const body = msg.message.conversation ||
+                    msg.message.extendedTextMessage?.text ||
+                    msg.message.imageMessage?.caption || "";
 
-            // Get text content safely
-            const body = msg.message.conversation ||
-                msg.message.extendedTextMessage?.text ||
-                msg.message.imageMessage?.caption || "";
+                if (!body) continue;
 
-            if (!body) continue;
-
-            if (fromMe) {
-                const bodyUpper = body.trim().toUpperCase();
-                const commands = ["URGENT", "NOT URGENT", "ALL TASKS", "EMERGENCY", "NON EMERGENCY", "NO EMERGENCY", "FILTER", "MID", "ALL"];
-                if (!commands.includes(bodyUpper)) {
+                // CRITICAL FIX: Never forward outgoing bot messages to FastAPI.
+                // If we do, FastAPI sees the recipient's number as the sender and
+                // replies to it, causing an infinite send loop.
+                if (fromMe) {
                     continue;
                 }
+
+                console.log(`Received message from ${from}: ${body}`);
+
+                // Standardize remoteJid for python backend
+                const cleanFrom = from.replace("@s.whatsapp.net", "").replace("@g.us", "").replace(/[^0-9]/g, "");
+
+                const payload = {
+                    From: cleanFrom,
+                    Body: body
+                };
+
+                if (msg.message.imageMessage) {
+                    payload.MediaUrl0 = "media_attached_but_unsupported_by_simple_forwarder";
+                }
+
+                try {
+                    console.log('calling the webhook endpoint from the fastapi');
+                    await fetch(`${FASTAPI_URL}/webhook`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                } catch (error) {
+                    console.error(`Error forwarding to webhook. Is FastAPI running on ${FASTAPI_URL}?`, error.message);
+                    lastErrorGlobal = { when: 'forward_webhook', err: error.message };
+                }
             }
-
-            console.log(`Received message from ${from}: ${body}`);
-
-            // Standardize remoteJid for python backend
-            const cleanFrom = from.replace("@s.whatsapp.net", "").replace("@g.us", "").replace(/[^0-9]/g, "");
-
-            const payload = {
-                From: cleanFrom,
-                Body: body
-            };
-
-            if (msg.message.imageMessage) {
-                payload.MediaUrl0 = "media_attached_but_unsupported_by_simple_forwarder";
-            }
-
-            try {
-                console.log('calling the webhook endpoint from the fastapi');
-                await fetch(`${FASTAPI_URL}/webhook`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-            } catch (error) {
-                console.error(`Error forwarding to webhook. Is FastAPI running on ${FASTAPI_URL}?`, error.message);
-                lastErrorGlobal = { when: 'forward_webhook', err: error.message };
-            }
-        }
-    });
+        });
+    } catch (err) {
+        console.error('Fatal error starting socket:', err);
+    } finally {
+        isStartingSock = false;
+    }
 }
 
 startSock();
