@@ -66,13 +66,32 @@ let isConnected = false;
 let pushName = "";
 let lastDisconnectGlobal = null;
 let lastErrorGlobal = null;
-let isStartingSock = false; // CRITICAL FIX: prevent concurrent socket creation
+let isStartingSock = false; // Prevent concurrent socket creation
 
 // Reconnect / clear guard to avoid infinite clear-restart loops
 let clearAuthAttempts = 0;
 let lastClearTime = 0;
 const MAX_CLEAR_ATTEMPTS = 3;
 const CLEAR_ATTEMPT_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+
+// CRITICAL: Deduplicate messages to prevent loops during Baileys reconnects/syncs
+const processedMessageIds = new Set();
+const MAX_PROCESSED_IDS = 500;
+
+function isDuplicateMessage(id) {
+    if (!id) return false;
+    if (processedMessageIds.has(id)) return true;
+    processedMessageIds.add(id);
+    // Keep set from growing forever
+    if (processedMessageIds.size > MAX_PROCESSED_IDS) {
+        const [first] = processedMessageIds;
+        processedMessageIds.delete(first);
+    }
+    return false;
+}
+
+// CRITICAL: Prevent concurrent /send requests to the same chat (FastAPI retry spam)
+const sendingLocks = new Set();
 
 const logger = pino({ level: 'silent' });
 
@@ -231,7 +250,6 @@ async function startSock() {
         } catch (e) { /* ignore */ }
 
         sock.ev.on('creds.update', saveCreds);
-        // ... rest of your code
 
         sock.ev.on('connection.update', (update) => {
             const { connection, lastDisconnect, qr } = update;
@@ -254,11 +272,8 @@ async function startSock() {
                 isConnected = false;
                 pushName = "";
 
-                // CRITICAL FIX: Remove listeners from the dying socket so it
-                // doesn't keep firing messages.upsert while we reconnect.
-                if (sock && sock.ev) {
-                    try { sock.ev.removeAllListeners(); } catch (e) {}
-                }
+                // Capture the dying socket before anything else
+                const deadSock = sock;
 
                 // Log detailed disconnect info
                 try {
@@ -276,7 +291,7 @@ async function startSock() {
 
                 // If WA returned 428 (Precondition Required / Connection Terminated), clear saved auth and force a fresh login (QR)
                 if (statusCode === 428) {
-                    console.log('Detected 428 Connection Terminated — consider clearing saved auth and forcing a fresh QR');
+                    console.log('Detected 428 Connection Terminated — clearing saved auth and forcing a fresh QR');
                     currentQR = "";
 
                     const now = Date.now();
@@ -298,37 +313,47 @@ async function startSock() {
                     lastClearTime = now;
 
                     (async () => {
-                    // Kill the dying socket's listeners FIRST so its creds.update can't resurrect rows mid-clear
-                    if (sock && sock.ev) {
-                        try { sock.ev.removeAllListeners(); } catch (e) {}
-                    }
-                    const deadSock = sock;
-                    sock = null;
-                    if (deadSock?.ws) { try { deadSock.ws.close(); } catch (e) {} }
-
-                    // Must match the prefix used in getAuthStateStore() above, or this
-                    // clear becomes a no-op against the wrong rows.
-                    const KEY_PREFIX = process.env.BAILEYS_AUTH_PREFIX || 'coherzo:';
-                    if (process.env.DATABASE_URL) {
-                        const pool = getDbPool();
-                        if (pool) {
-                            try {
-                                await pool.query('DELETE FROM whatsapp_auth_store WHERE key LIKE $1', [KEY_PREFIX + '%']);
-                                console.log('Cleared whatsapp_auth_store rows with prefix', KEY_PREFIX);
-                            } catch (err) {
-                                console.error('Error clearing whatsapp_auth_store:', err.message);
-                            }
+                        // Kill the dying socket's listeners FIRST so its creds.update can't resurrect rows mid-clear
+                        if (deadSock?.ev) {
+                            try { deadSock.ev.removeAllListeners(); } catch (e) {}
                         }
-                    } else {
-                        const authDir = process.env.DATA_PATH || './.baileys_auth_coherzo';
-                        try { fs.rmSync(authDir, { recursive: true, force: true }); } catch (err) {}
-                    }
+                        if (deadSock?.ws) {
+                            try { deadSock.ws.close(); } catch (e) {}
+                        }
+                        sock = null;
 
-                    setTimeout(() => { startSock(); }, 1500);
-                })();
+                        // Must match the prefix used in getAuthStateStore() above, or this
+                        // clear becomes a no-op against the wrong rows.
+                        const KEY_PREFIX = process.env.BAILEYS_AUTH_PREFIX || 'coherzo:';
+                        if (process.env.DATABASE_URL) {
+                            const pool = getDbPool();
+                            if (pool) {
+                                try {
+                                    await pool.query('DELETE FROM whatsapp_auth_store WHERE key LIKE $1', [KEY_PREFIX + '%']);
+                                    console.log('Cleared whatsapp_auth_store rows with prefix', KEY_PREFIX);
+                                } catch (err) {
+                                    console.error('Error clearing whatsapp_auth_store:', err.message);
+                                }
+                            }
+                        } else {
+                            const authDir = process.env.DATA_PATH || './.baileys_auth_coherzo';
+                            try { fs.rmSync(authDir, { recursive: true, force: true }); } catch (err) {}
+                        }
+
+                        setTimeout(() => { startSock(); }, 1500);
+                    })();
 
                     return;
                 }
+
+                // Normal close: fully destroy the old socket so it cannot fire more events
+                if (deadSock?.ev) {
+                    try { deadSock.ev.removeAllListeners(); } catch (e) {}
+                }
+                if (deadSock?.ws) {
+                    try { deadSock.ws.close(); } catch (e) {}
+                }
+                sock = null;
 
                 const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
                 console.log('Connection closed due to ', lastDisconnect?.error, ', reconnecting: ', shouldReconnect);
@@ -358,10 +383,17 @@ async function startSock() {
 
                 if (!body) continue;
 
-                // CRITICAL FIX: Never forward outgoing bot messages to FastAPI.
+                // CRITICAL FIX 1: Deduplicate by message ID to stop double/triple processing
+                if (isDuplicateMessage(msg.key.id)) {
+                    console.log(`⏩ Skipping duplicate message id=${msg.key.id}`);
+                    continue;
+                }
+
+                // CRITICAL FIX 2: Never forward outgoing bot messages to FastAPI.
                 // If we do, FastAPI sees the recipient's number as the sender and
                 // replies to it, causing an infinite send loop.
                 if (fromMe) {
+                    console.log(`⏩ Skipping outgoing message (fromMe=true) id=${msg.key.id}`);
                     continue;
                 }
 
@@ -381,11 +413,15 @@ async function startSock() {
 
                 try {
                     console.log('calling the webhook endpoint from the fastapi');
+                    const controller = new AbortController();
+                    const timeout = setTimeout(() => controller.abort(), 10000);
                     await fetch(`${FASTAPI_URL}/webhook`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
+                        body: JSON.stringify(payload),
+                        signal: controller.signal
                     });
+                    clearTimeout(timeout);
                 } catch (error) {
                     console.error(`Error forwarding to webhook. Is FastAPI running on ${FASTAPI_URL}?`, error.message);
                     lastErrorGlobal = { when: 'forward_webhook', err: error.message };
@@ -629,40 +665,51 @@ app.post('/send', async (req, res) => {
             chatId = `${cleanNumber}@s.whatsapp.net`;
         }
 
-        console.log(`Attempting to send message to ${chatId}`);
-
-        if (buttons && buttons.length > 0) {
-            console.log(`Sending keyword-optimized text menu to ${chatId}`);
-            const menuHeader = text || "⚠️ *Action Required* ⚠️\nPlease select an option by replying with one of the keywords below:";
-            const menuBody = buttons.map(b => `👉 *${b.toUpperCase().trim()}*`).join('\n');
-            const fullMenuText = `${menuHeader}\n\n${menuBody}\n\n_Type your chosen keyword exactly as shown to respond._`;
-
-            await sock.sendMessage(chatId, { text: fullMenuText });
-            console.log("✅ Keyword text menu sent successfully");
-        } else if (imageUrl) {
-            console.log(`Sending image to ${chatId}`);
-            let imageSource;
-            if (imageUrl.startsWith('data:image') || !imageUrl.startsWith('http')) {
-                // Extract raw base64 string
-                const base64Data = imageUrl.replace(/^data:image\/[a-z]+;base64,/, "");
-                imageSource = Buffer.from(base64Data, 'base64');
-            } else {
-                imageSource = { url: imageUrl };
-            }
-            await sock.sendMessage(chatId, {
-                image: imageSource,
-                caption: caption || text || ""
-            });
-            console.log("✅ Image sent successfully");
-        } else if (text) {
-            console.log(`Sending text to ${chatId}`);
-            await sock.sendMessage(chatId, { text: text });
-            console.log("✅ Text sent successfully");
-        } else {
-            return res.status(400).json({ error: 'Either text, imageUrl, or buttons is required' });
+        // CRITICAL FIX 3: Block concurrent sends to the same chat to prevent FastAPI retry spam
+        if (sendingLocks.has(chatId)) {
+            console.log(`⏳ Send lock active for ${chatId}, rejecting duplicate request`);
+            return res.status(429).json({ error: 'Message already being sent to this number. Please wait.' });
         }
 
-        res.json({ success: true, message: 'Message sent!' });
+        sendingLocks.add(chatId);
+        console.log(`Attempting to send message to ${chatId}`);
+
+        try {
+            if (buttons && buttons.length > 0) {
+                console.log(`Sending keyword-optimized text menu to ${chatId}`);
+                const menuHeader = text || "⚠️ *Action Required* ⚠️\nPlease select an option by replying with one of the keywords below:";
+                const menuBody = buttons.map(b => `👉 *${b.toUpperCase().trim()}*`).join('\n');
+                const fullMenuText = `${menuHeader}\n\n${menuBody}\n\n_Type your chosen keyword exactly as shown to respond._`;
+
+                await sock.sendMessage(chatId, { text: fullMenuText });
+                console.log("✅ Keyword text menu sent successfully");
+            } else if (imageUrl) {
+                console.log(`Sending image to ${chatId}`);
+                let imageSource;
+                if (imageUrl.startsWith('data:image') || !imageUrl.startsWith('http')) {
+                    // Extract raw base64 string
+                    const base64Data = imageUrl.replace(/^data:image\/[a-z]+;base64,/, "");
+                    imageSource = Buffer.from(base64Data, 'base64');
+                } else {
+                    imageSource = { url: imageUrl };
+                }
+                await sock.sendMessage(chatId, {
+                    image: imageSource,
+                    caption: caption || text || ""
+                });
+                console.log("✅ Image sent successfully");
+            } else if (text) {
+                console.log(`Sending text to ${chatId}`);
+                await sock.sendMessage(chatId, { text: text });
+                console.log("✅ Text sent successfully");
+            } else {
+                return res.status(400).json({ error: 'Either text, imageUrl, or buttons is required' });
+            }
+
+            res.json({ success: true, message: 'Message sent!' });
+        } finally {
+            sendingLocks.delete(chatId);
+        }
     } catch (error) {
         console.error("Error sending message:", error);
         res.status(500).json({ error: error.message });
