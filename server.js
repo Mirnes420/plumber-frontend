@@ -10,6 +10,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
 import fs from 'fs';
+import crypto from 'crypto';
 
 // ── Load env FIRST before reading any process.env values ──
 dotenv.config({ path: '../.env' });
@@ -74,7 +75,7 @@ let lastClearTime = 0;
 const MAX_CLEAR_ATTEMPTS = 3;
 const CLEAR_ATTEMPT_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
 
-// CRITICAL: Deduplicate messages to prevent loops during Baileys reconnects/syncs
+// CRITICAL: Deduplicate incoming messages to prevent loops during Baileys reconnects/syncs
 const processedMessageIds = new Set();
 const MAX_PROCESSED_IDS = 500;
 
@@ -82,7 +83,6 @@ function isDuplicateMessage(id) {
     if (!id) return false;
     if (processedMessageIds.has(id)) return true;
     processedMessageIds.add(id);
-    // Keep set from growing forever
     if (processedMessageIds.size > MAX_PROCESSED_IDS) {
         const [first] = processedMessageIds;
         processedMessageIds.delete(first);
@@ -92,6 +92,23 @@ function isDuplicateMessage(id) {
 
 // CRITICAL: Prevent concurrent /send requests to the same chat (FastAPI retry spam)
 const sendingLocks = new Set();
+
+// CRITICAL: Prevent duplicate /send payloads within a time window (stops FastAPI retry loops)
+const recentSendAttempts = new Map();
+const SEND_DEDUP_WINDOW_MS = 45000; // 45 seconds
+const MAX_RECENT_SEND_ENTRIES = 200;
+
+// CRITICAL: Global flood protection for /send
+const globalSendHistory = []; // timestamps of recent sends
+const GLOBAL_SEND_FLOOD_LIMIT = 10;
+const GLOBAL_SEND_FLOOD_WINDOW_MS = 10000; // 10 seconds
+
+setInterval(() => {
+    const cutoff = Date.now() - SEND_DEDUP_WINDOW_MS;
+    for (const [key, ts] of recentSendAttempts) {
+        if (ts < cutoff) recentSendAttempts.delete(key);
+    }
+}, 60000); // cleanup every 60s
 
 const logger = pino({ level: 'silent' });
 
@@ -392,7 +409,7 @@ async function startSock() {
                 // CRITICAL FIX 2: Never forward outgoing bot messages to FastAPI.
                 // If we do, FastAPI sees the recipient's number as the sender and
                 // replies to it, causing an infinite send loop.
-                if (fromMe) {
+                if (fromMe === true) {
                     console.log(`⏩ Skipping outgoing message (fromMe=true) id=${msg.key.id}`);
                     continue;
                 }
@@ -645,6 +662,7 @@ app.get('/auth', (req, res) => {
 app.post('/send', async (req, res) => {
     try {
         const { number, text, imageUrl, caption, buttons, demo } = req.body;
+        const callerIp = req.ip || req.socket.remoteAddress || 'unknown';
 
         if (!number) {
             return res.status(400).json({ error: 'Number is required (e.g. +385919293138 or "me")' });
@@ -665,14 +683,44 @@ app.post('/send', async (req, res) => {
             chatId = `${cleanNumber}@s.whatsapp.net`;
         }
 
-        // CRITICAL FIX 3: Block concurrent sends to the same chat to prevent FastAPI retry spam
+        // ── GLOBAL FLOOD PROTECTION ──
+        const now = Date.now();
+        while (globalSendHistory.length > 0 && globalSendHistory[0] < now - GLOBAL_SEND_FLOOD_WINDOW_MS) {
+            globalSendHistory.shift();
+        }
+        if (globalSendHistory.length >= GLOBAL_SEND_FLOOD_LIMIT) {
+            console.warn(`🚨 GLOBAL SEND FLOOD detected from ${callerIp}. Blocking request.`);
+            return res.status(503).json({ error: 'Server is sending too many messages too quickly. Cooldown active.' });
+        }
+
+        // ── PAYLOAD DEDUPLICATION ──
+        // Create a fingerprint of this send request to stop FastAPI retry loops
+        const payloadFingerprint = crypto.createHash('sha256')
+            .update(`${chatId}:${text || ''}:${caption || ''}:${imageUrl ? 'img' : 'txt'}:${JSON.stringify(buttons || [])}`)
+            .digest('hex');
+        const lastSent = recentSendAttempts.get(payloadFingerprint);
+        if (lastSent && (now - lastSent) < SEND_DEDUP_WINDOW_MS) {
+            console.warn(`⏳ Duplicate /send blocked from ${callerIp} to ${chatId} (within ${SEND_DEDUP_WINDOW_MS}ms)`);
+            return res.status(429).json({ error: 'Duplicate send request blocked. This exact message was already sent recently.' });
+        }
+
+        // ── PER-CHAT CONCURRENCY LOCK ──
         if (sendingLocks.has(chatId)) {
-            console.log(`⏳ Send lock active for ${chatId}, rejecting duplicate request`);
+            console.log(`⏳ Send lock active for ${chatId}, rejecting duplicate request from ${callerIp}`);
             return res.status(429).json({ error: 'Message already being sent to this number. Please wait.' });
         }
 
         sendingLocks.add(chatId);
-        console.log(`Attempting to send message to ${chatId}`);
+        globalSendHistory.push(now);
+        recentSendAttempts.set(payloadFingerprint, now);
+
+        // Keep map from growing forever
+        if (recentSendAttempts.size > MAX_RECENT_SEND_ENTRIES) {
+            const firstKey = recentSendAttempts.keys().next().value;
+            recentSendAttempts.delete(firstKey);
+        }
+
+        console.log(`Attempting to send message to ${chatId} from caller=${callerIp}`);
 
         try {
             if (buttons && buttons.length > 0) {
