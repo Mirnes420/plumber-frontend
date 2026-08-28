@@ -103,6 +103,11 @@ const globalSendHistory = []; // timestamps of recent sends
 const GLOBAL_SEND_FLOOD_LIMIT = 10;
 const GLOBAL_SEND_FLOOD_WINDOW_MS = 10000; // 10 seconds
 
+// CRITICAL: Demo lock. When a demo submission hits /submit-form, we lock /send
+// for a short window so FastAPI cannot spam real alerts even if it tries.
+let demoLockUntil = 0;
+const DEMO_LOCK_MS = 30000; // 30 seconds
+
 setInterval(() => {
     const cutoff = Date.now() - SEND_DEDUP_WINDOW_MS;
     for (const [key, ts] of recentSendAttempts) {
@@ -683,6 +688,22 @@ app.post('/send', async (req, res) => {
             chatId = `${cleanNumber}@s.whatsapp.net`;
         }
 
+        // ── DEMO LOCK GUARD ──
+        // If a demo request was recently submitted, block all real backend sends.
+        if (Date.now() < demoLockUntil) {
+            const remaining = Math.ceil((demoLockUntil - Date.now()) / 1000);
+            console.warn(`🚫 DEMO LOCK ACTIVE: Rejected send to ${chatId} from ${callerIp}. Lock expires in ${remaining}s.`);
+            return res.status(503).json({ error: `Demo mode lock active. Real sends are disabled for ${remaining}s.` });
+        }
+
+        // ── EMERGENCY PATTERN BLOCK (last-resort safety net) ──
+        // If FastAPI somehow still tries to dispatch real alerts, block them by content.
+        const EMERGENCY_PATTERNS = ["NEW EMERGENCY ALERT", "NEW EMERGENCY DISPATCH", "EMERGENCY DETECTED"];
+        if (text && EMERGENCY_PATTERNS.some(p => text.includes(p))) {
+            console.warn(`🚫 EMERGENCY BLOCK: Rejected suspicious alert send to ${chatId} from ${callerIp}.`);
+            return res.status(403).json({ error: 'Emergency alert sending is currently disabled.' });
+        }
+
         // ── GLOBAL FLOOD PROTECTION ──
         const now = Date.now();
         while (globalSendHistory.length > 0 && globalSendHistory[0] < now - GLOBAL_SEND_FLOOD_WINDOW_MS) {
@@ -768,10 +789,19 @@ app.post('/send', async (req, res) => {
 app.post('/submit-form', upload.single('image'), async (req, res) => {
     try {
         const { phone, description, location, customer_name, plumber_id, demo, professional_type } = req.body;
-        console.log(`🌐 Received web form from ${customer_name || 'Unknown'} (${phone}) [Plumber ID: ${plumber_id || 'None'} | Type: ${professional_type || 'plumber'} | Demo: ${demo}]`);
+
+        // CRITICAL: Robust demo detection. Handles "true", "1", "on", boolean true, etc.
+        const isDemo = String(demo).toLowerCase() === 'true' || String(demo) === '1' || demo === true || String(demo).toLowerCase() === 'on';
+        console.log(`🌐 Received web form from ${customer_name || 'Unknown'} (${phone}) [Plumber ID: ${plumber_id || 'None'} | Type: ${professional_type || 'plumber'} | Demo: ${demo} (resolved=${isDemo})]`);
+
+        // CRITICAL: Activate demo lock so /send rejects real backend traffic for 30s
+        if (isDemo) {
+            demoLockUntil = Date.now() + DEMO_LOCK_MS;
+            console.log(`🔒 Demo lock activated until ${new Date(demoLockUntil).toISOString()}`);
+        }
 
         // Handle Quick Demo Mode Bypass directly inside Express
-        if (demo === 'true' || demo === true) {
+        if (isDemo) {
             console.log(`🚀 Demo Mode Active: Intercepting request and mock-paging provider directly via WhatsApp`);
 
             if (!isConnected || !sock) {
@@ -804,6 +834,7 @@ app.post('/submit-form', upload.single('image'), async (req, res) => {
         if (location) formData.append('location', location);
         if (customer_name) formData.append('customer_name', customer_name);
         if (plumber_id) formData.append('plumber_id', plumber_id);
+        // Only pass demo forward if it has a real value, to avoid sending "null" string
         if (demo) formData.append('demo', demo);
         if (professional_type) formData.append('professional_type', professional_type);
 
