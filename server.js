@@ -687,13 +687,12 @@ app.post('/send', async (req, res) => {
 
         // Demo lock guard removed: allow sends to proceed normally.
 
-        // ── EMERGENCY PATTERN BLOCK (last-resort safety net) ──
-        // If FastAPI somehow still tries to dispatch real alerts, block them by content.
-        const EMERGENCY_PATTERNS = ["NEW EMERGENCY ALERT", "NEW EMERGENCY DISPATCH", "EMERGENCY DETECTED"];
-        if (text && EMERGENCY_PATTERNS.some(p => text.includes(p))) {
-            console.warn(`🚫 EMERGENCY BLOCK: Rejected suspicious alert send to ${chatId} from ${callerIp}.`);
-            return res.status(403).json({ error: 'Emergency alert sending is currently disabled.' });
-        }
+        // Emergency content filter removed to allow real alerts through.
+        // If you want a passive check, enable logging below instead of blocking:
+        // const EMERGENCY_PATTERNS = ["NEW EMERGENCY ALERT", "NEW EMERGENCY DISPATCH", "EMERGENCY DETECTED"];
+        // if (text && EMERGENCY_PATTERNS.some(p => text.includes(p))) {
+        //     console.warn(`⚠️ Emergency pattern detected for ${chatId} from ${callerIp}`);
+        // }
 
         // ── GLOBAL FLOOD PROTECTION ──
         const now = Date.now();
